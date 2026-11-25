@@ -1,0 +1,7 @@
+exclude:
+  - migrations
+  - test
+  - worker
+  - wrangler.example.jsonc
+  - wrangler.jsonc
+  - README.md

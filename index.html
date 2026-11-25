@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9ff">
+  <meta name="description" content="Personalized meal, fitness, and study plans in your PlanPulse dashboard every Sunday.">
+  <title>PlanPulse | Personalized Weekly Plans</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #faf9ff;
+      --white: #fff;
+      --ink: #1f1835;
+      --muted: #615a70;
+      --accent: #643ddd;
+      --accent-dark: #4d2bb5;
+      --soft: #efebff;
+      --line: #e4dfee;
+      --night: #241441;
+      --radius: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    h1, h2, h3, h4, p, figure { margin: 0; }
+    a { color: inherit; text-decoration: none; }
+    button, select, input { font: inherit; color: inherit; }
+    button, summary, select, input[type="range"] { cursor: pointer; }
+    a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+    }
+    .wrap { width: min(1152px, calc(100% - 64px)); margin-inline: auto; }
+    .site-header { background: var(--bg); border-bottom: 1px solid var(--line); }
+    .nav-bar { min-height: 77px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: inline-flex; align-items: center; gap: 9px; font-size: 1.28rem; font-weight: 780; letter-spacing: -.055em; }
+    .brand-mark { display: inline-grid; place-items: center; width: 34px; aspect-ratio: 1; border-radius: 10px; background: var(--accent); color: white; flex: none; }
+    .brand-mark::before { content: ""; width: 21px; height: 16px; background: currentColor; clip-path: polygon(0 48%, 24% 48%, 38% 6%, 56% 77%, 67% 48%, 100% 48%, 100% 61%, 75% 61%, 55% 100%, 37% 31%, 31% 61%, 0 61%); }
+    .nav-links { display: flex; gap: clamp(18px, 3vw, 36px); align-items: center; color: var(--muted); font-size: .9rem; font-weight: 600; }
+    .nav-links a:hover, .footer-links button:hover { color: var(--accent-dark); }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 11px; min-height: 50px;
+      padding: 11px 19px; border-radius: 11px; border: 1px solid transparent; text-align: center;
+      font-size: .9rem; font-weight: 700; line-height: 1.25;
+    }
+    .primary { background: var(--accent); color: white; }
+    .primary:hover { background: var(--accent-dark); }
+    .secondary { border-color: var(--line); background: var(--white); }
+    .secondary:hover { border-color: #b7a7eb; background: #f9f6ff; }
+    .nav-action { min-height: 42px; padding-inline: 15px; }
+    .arrow { font-size: 1.12rem; line-height: 1; }
+    .hero { padding-block: clamp(44px, 7vw, 92px) 35px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1.03fr; gap: clamp(34px, 6vw, 83px); align-items: center; }
+    .delivery { display: flex; align-items: center; gap: 9px; color: var(--accent-dark); font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
+    .delivery::before { content: ""; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--soft); margin-left: 4px; }
+    h1 { margin: 21px 0 19px; font-size: clamp(3.05rem, 5.21vw, 5rem); font-weight: 780; line-height: 1.01; letter-spacing: -.075em; }
+    h1 span { color: var(--accent); display: block; }
+    .hero-copy > p:not(.delivery):not(.hero-price) { max-width: 39ch; font-size: clamp(1rem, 1.65vw, 1.18rem); line-height: 1.65; color: var(--muted); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .hero-price { margin-top: 14px; color: var(--muted); font-size: .81rem; line-height: 1.5; }
+    .product-stage {
+      position: relative; display: grid; place-items: center; min-width: 0; overflow: hidden; isolation: isolate;
+      min-height: 465px; padding: 36px 25px; border-radius: 26px;
+      background: radial-gradient(ellipse at 75% 5%, #6844be, transparent 68%), linear-gradient(143deg, #302053, #22153c);
+    }
+    .product-stage::before {
+      position: absolute; z-index: -1; inset: 0; content: "";
+      background-image: linear-gradient(#f4edff20 1px, transparent 1px), linear-gradient(90deg, #f4edff20 1px, transparent 1px);
+      background-size: 31px 31px; mask-image: radial-gradient(ellipse at 65% 34%, black, transparent 88%);
+    }
+    .sample-sheet {
+      position: relative; width: min(100%, 356px); padding: 23px; background: white;
+      border-radius: 16px; border: 1px solid #fff; box-shadow: 0 26px 54px #14092984, 10px 10px 0 #a889f45c;
+    }
+    .sample-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+    .sample-brand { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; letter-spacing: -.045em; font-weight: 800; }
+    .sample-brand .brand-mark { width: 20px; border-radius: 6px; }
+    .sample-brand .brand-mark::before { width: 13px; height: 10px; }
+    .sample-type { color: var(--accent-dark); background: var(--soft); font-size: .64rem; padding: 5px 8px; border-radius: 6px; font-weight: 720; }
+    .sample-title { line-height: 1.2; margin: 15px 0 5px; font-size: clamp(1.22rem, 3vw, 1.65rem); font-weight: 760; letter-spacing: -.055em; }
+    .sample-sub { color: var(--muted); font-size: .73rem; }
+    .sample-list { padding: 0; margin: 13px 0; list-style: none; }
+    .sample-list li { display: grid; grid-template-columns: 35px 1fr 16px; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding: 10px 0; min-width: 0; font-size: .74rem; }
+    .sample-list li > span:first-child { font-size: .66rem; font-weight: 720; color: var(--accent-dark); }
+    .sample-check { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #bcb1d5; display: grid; place-items: center; color: white; font-size: .65rem; }
+    .sample-check.checked { background: var(--accent); border-color: var(--accent); }
+    .sample-delivery { color: #4e347f; background: #f2edff; padding: 9px 11px; border-radius: 7px; font-size: .72rem; font-weight: 650; }
+    .track-overview { margin-top: 38px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 15px; background: white; }
+    .track-link { display: flex; align-items: center; gap: 12px; padding: 15px 20px; min-width: 0; font-size: .88rem; font-weight: 730; }
+    .track-link:not(:first-child) { border-left: 1px solid var(--line); }
+    .track-link:hover { color: var(--accent-dark); }
+    .track-link > .arrow { margin-left: auto; color: var(--accent-dark); }
+    .track-icon { width: 33px; height: 33px; display: grid; place-items: center; flex: none; border-radius: 9px; color: #4d2bb5; background: var(--soft); font-size: 1.08rem; }
+    .track-link:nth-child(2) .track-icon { color: #315c4d; background: #e3f4ec; }
+    .track-link:nth-child(3) .track-icon { color: #854b24; background: #ffecdf; }
+    .section { padding-block: clamp(55px, 8vw, 96px); }
+    .section-heading { margin-bottom: 28px; }
+    h2 { font-size: clamp(2.05rem, 4.4vw, 3.55rem); font-weight: 760; line-height: 1.05; letter-spacing: -.065em; }
+    .section-heading p { color: var(--muted); margin-top: 11px; line-height: 1.6; }
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .step { padding: 21px; border-top: 1px solid var(--line); }
+    .step h3 { font-size: 1.12rem; letter-spacing: -.027em; }
+    .step p { color: var(--muted); line-height: 1.62; font-size: .94rem; margin-top: 7px; }
+    .demo-section { background: #f0ecfa; border-block: 1px solid var(--line); }
+    .demo-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 18px; align-items: start; }
+    .panel { min-width: 0; background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(17px, 3vw, 28px); }
+    .controls { display: grid; gap: 19px; }
+    fieldset { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+    .controls label, .controls legend { display: block; margin-bottom: 8px; font-size: .83rem; font-weight: 700; }
+    .track-selector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+    .track-btn, .legal-tab { border: 1px solid var(--line); border-radius: 9px; background: white; min-height: 43px; padding: 5px; font-size: .82rem; font-weight: 650; }
+    .track-btn[aria-pressed="true"], .legal-tab[aria-pressed="true"] { background: var(--soft); color: var(--accent-dark); border-color: #c8b9f7; }
+    select { display: block; min-height: 45px; width: 100%; background: white; border: 1px solid #d8d0e5; border-radius: 9px; padding: 7px 9px; font-size: .9rem; }
+    .range-heading { display: flex; justify-content: space-between; gap: 8px; font-size: .83rem; font-weight: 700; }
+    .range-heading output { color: var(--accent-dark); }
+    input[type="range"] { display: block; width: 100%; min-height: 26px; margin: 0; accent-color: var(--accent); }
+    .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 17px; }
+    .dashboard-week { font-size: .83rem; color: var(--muted); font-weight: 650; }
+    .button.compact { min-height: 42px; padding: 7px 11px; }
+    .controls h3 { font-size: 1.1rem; letter-spacing: -.027em; }
+    .day-date { display: block; color: var(--muted); font-size: .69rem; font-weight: 500; }
+    .notification-card { background: var(--soft); border-radius: 11px; padding: 12px; margin-bottom: 11px; }
+    .notification-card h3 { font-size: .93rem; }
+    .notification-card p, .reminder-form small { color: var(--muted); margin-top: 4px; line-height: 1.5; font-size: .8rem; }
+    .reminder-form { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+    .reminder-toggle { display: flex; gap: 8px; align-items: center; font-size: .9rem; font-weight: 650; }
+    .reminder-toggle input { width: 17px; height: 17px; accent-color: var(--accent); }
+    .reminder-time { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; font-size: .85rem; }
+    .reminder-time input { border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; background: var(--white); }
+    .reminder-form button { justify-self: start; }
+    .reminder-form button:disabled { opacity: .55; cursor: default; }
+    .preview-header { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+    .preview-badge { display: inline-flex; padding: 4px 7px; background: var(--soft); color: var(--accent-dark); border-radius: 6px; font-size: .69rem; font-weight: 740; }
+    .preview-header h3 { margin-block: 5px 3px; font-size: clamp(1.2rem, 2vw, 1.57rem); letter-spacing: -.035em; }
+    .preview-meta, .preview-hint { color: var(--muted); font-size: .8rem; line-height: 1.5; }
+    .preview-progress { display: grid; gap: 4px; color: var(--accent-dark); font-size: .72rem; font-weight: 700; }
+    progress { width: 84px; height: 9px; accent-color: var(--accent); }
+    .schedule { display: grid; gap: 6px; margin-top: 13px; }
+    .day-check {
+      display: grid; grid-template-columns: 17px 38px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 53px;
+      padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: #faf9fd; text-align: left;
+    }
+    .day-check[aria-pressed="true"] { border-color: #c8b9f7; background: #f3efff; }
+    .day-check[aria-pressed="true"] .sample-check { background: var(--accent); border-color: var(--accent); }
+    .day-check[aria-pressed="true"] .day-title { text-decoration: line-through; }
+    .day-name { font-size: .71rem; font-weight: 730; color: var(--accent-dark); }
+    .day-title, .day-detail { display: block; overflow-wrap: anywhere; }
+    .day-title { font-size: .87rem; font-weight: 680; }
+    .day-detail { margin-top: 2px; font-size: .72rem; color: var(--muted); }
+    .preview-hint { margin-top: 12px; }
+    .price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+    .price-card { display: flex; flex-direction: column; align-items: flex-start; }
+    .price-card.featured { background: var(--night); border-color: var(--night); color: white; }
+    .price-card h3 { font-size: 1.26rem; letter-spacing: -.03em; }
+    .price-card p { margin-top: 7px; color: var(--muted); line-height: 1.55; font-size: .89rem; }
+    .price-card.featured p, .price-card.featured .price-period { color: #d7c9f2; }
+    .price { display: flex; align-items: baseline; gap: 4px; margin-top: 15px; }
+    .price strong { font-size: 2.85rem; font-weight: 760; line-height: 1; letter-spacing: -.07em; }
+    .price-period { color: var(--muted); font-size: .83rem; }
+    .price-card .trial { color: var(--accent-dark); font-weight: 680; }
+    .price-card.featured .trial { color: #d7c5ff; }
+    .price-card ul { display: grid; gap: 10px; list-style: none; padding: 0; margin: 16px 0 24px; font-size: .86rem; line-height: 1.5; }
+    .price-card li { display: grid; grid-template-columns: 14px 1fr; gap: 6px; }
+    .price-card li::before { content: "✓"; color: var(--accent-dark); font-weight: 740; }
+    .price-card.featured li::before { color: #cfbcff; }
+    .price-card .button { margin-top: auto; width: 100%; }
+    .price-card.featured .button { background: #dbccff; color: #2b174b; }
+    .price-card.featured .button:hover { background: #eee6ff; }
+    .faq-section { background: white; border-block: 1px solid var(--line); }
+    .faq-layout { display: grid; grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); gap: 30px; align-items: start; }
+    .faq-list { border-top: 1px solid var(--line); }
+    .faq-list details { border-bottom: 1px solid var(--line); }
+    .faq-list summary { list-style: none; display: flex; gap: 14px; justify-content: space-between; align-items: center; padding-block: 16px; font-weight: 700; }
+    .faq-list summary::-webkit-details-marker { display: none; }
+    .faq-list summary::after { content: "+"; font-size: 1.2rem; color: var(--accent-dark); }
+    .faq-list details[open] summary::after { content: "−"; }
+    .faq-list p { padding: 0 18px 17px 0; color: var(--muted); line-height: 1.65; }
+    .site-footer { padding-block: 29px; }
+    .footer-top, .footer-links { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
+    .footer-links { justify-content: flex-start; gap: 4px 14px; }
+    .footer-links button { border: 0; padding: 7px 0; background: transparent; font-size: .79rem; font-weight: 650; }
+    .footer-info { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; display: grid; gap: 7px; }
+    .footer-info p { font-size: .75rem; color: var(--muted); line-height: 1.58; }
+    .footer-info a, .legal-content a { text-decoration: underline; text-underline-offset: 3px; }
+    dialog { color: var(--ink); background: white; width: min(440px, calc(100% - 30px)); max-height: calc(100% - 30px); padding: 24px; border: 1px solid var(--line); border-radius: 19px; }
+    dialog::backdrop { background: #1b1037a0; }
+    dialog h2 { padding-right: 35px; font-size: 1.65rem; letter-spacing: -.045em; }
+    dialog > p { color: var(--muted); line-height: 1.6; margin-block: 9px 17px; }
+    .dialog-close { position: absolute; top: 9px; right: 9px; border: 0; border-radius: 8px; background: var(--soft); width: 36px; height: 36px; font-size: 1.3rem; }
+    #legalModal { width: min(620px, calc(100% - 30px)); }
+    .legal-tabs { display: flex; flex-wrap: wrap; gap: 5px; border-bottom: 1px solid var(--line); padding-block: 13px; }
+    .legal-tab { padding-inline: 9px; }
+    .legal-content { display: grid; gap: 10px; padding-top: 12px; color: var(--muted); font-size: .9rem; line-height: 1.6; }
+    .legal-content h4 { color: var(--ink); }
+    @media (max-width: 920px) {
+      .hero-grid { gap: 33px; }
+      .product-stage { min-height: 410px; }
+    }
+    @media (max-width: 740px) {
+      .wrap { width: calc(100% - 36px); }
+      .nav-bar { min-height: 64px; }
+      .nav-links { display: none; }
+      .hero-grid, .demo-layout, .faq-layout { grid-template-columns: minmax(0, 1fr); }
+      .hero { padding-top: 42px; }
+      h1 { font-size: clamp(2.6rem, 10.8vw, 4.7rem); }
+      .product-stage { min-height: 358px; padding: 24px; }
+      .track-overview { margin-top: 19px; }
+      .track-link { padding: 12px; gap: 8px; }
+      .track-link > .arrow { display: none; }
+      .steps, .price-grid { grid-template-columns: 1fr; }
+      .steps { gap: 0; }
+      .step { padding: 16px 0; }
+      .step:last-child { padding-bottom: 0; }
+      .faq-layout { gap: 0; }
+    }
+    @media (max-width: 395px) {
+      .track-link { padding: 10px 5px; justify-content: center; gap: 5px; font-size: .75rem; }
+      .track-icon { width: 23px; height: 25px; font-size: .88rem; }
+      .product-stage { padding: 18px 15px 22px; }
+      .sample-sheet { padding: 16px; box-shadow: 0 18px 42px #14092984, 6px 6px 0 #a889f45c; }
+      .sample-list li { grid-template-columns: 26px 1fr 14px; gap: 5px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="site-header">
+    <div class="wrap nav-bar">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#customizer">Dashboard demo</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="button secondary nav-action" href="/member/">Member sign-in <span class="arrow" aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="delivery">New plans Sundays at 7 AM ET</p>
+            <h1 id="hero-title">A better week <span>starts on Sunday.</span></h1>
+            <p>Your meal, fitness, and study plans in one dashboard. See what’s scheduled each day and check it off as you go.</p>
+            <div class="hero-actions">
+              <a class="button primary" href="#pricing">Choose your plan <span class="arrow" aria-hidden="true">→</span></a>
+              <a class="button secondary" href="#customizer">Explore the dashboard</a>
+            </div>
+            <p class="hero-price">From $9/month · Cancel anytime</p>
+          </div>
+
+          <div class="product-stage">
+            <article class="sample-sheet" aria-labelledby="sample-title">
+              <div class="sample-top">
+                <span class="sample-brand"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</span>
+                <span class="sample-type">Dashboard preview</span>
+              </div>
+              <h2 class="sample-title" id="sample-title">Your weekly meal plan</h2>
+              <p class="sample-sub">High-protein dinners · Monday–Friday</p>
+              <ul class="sample-list">
+                <li><span>Mon</span><strong>Lemon herb chicken &amp; quinoa</strong><span class="sample-check checked" aria-hidden="true">✓</span></li>
+                <li><span>Tue</span><strong>Salmon, broccoli &amp; sweet potato</strong><span class="sample-check" aria-hidden="true"></span></li>
+                <li><span>Wed</span><strong>Turkey &amp; spinach stuffed peppers</strong><span class="sample-check" aria-hidden="true"></span></li>
+                <li><span>Thu</span><strong>Chickpea tuna salad</strong><span class="sample-check" aria-hidden="true"></span></li>
+                <li><span>Fri</span><strong>Garlic shrimp &amp; zucchini noodles</strong><span class="sample-check" aria-hidden="true"></span></li>
+              </ul>
+              <p class="sample-delivery">See your schedule and track your progress</p>
+            </article>
+          </div>
+        </div>
+
+        <nav class="track-overview" aria-label="Sample plan tracks">
+          <a class="track-link" href="#customizer" data-preview-track="meal"><span class="track-icon" aria-hidden="true">◫</span>Meal plans <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="track-link" href="#customizer" data-preview-track="fitness"><span class="track-icon" aria-hidden="true">↗</span>Fitness plans <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="track-link" href="#customizer" data-preview-track="study"><span class="track-icon" aria-hidden="true">▤</span>Study plans <span class="arrow" aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section">
+      <div class="wrap">
+        <div class="section-heading"><h2>How it works</h2></div>
+        <div class="steps">
+          <article class="step"><h3>Set your preferences</h3><p>Choose meal, fitness, or study plans and tell us your goals, constraints, and available time.</p></article>
+          <article class="step"><h3>Open your weekly schedule</h3><p>A fresh plan appears in your dashboard every Sunday. Open it on your phone or computer and mark activities complete.</p></article>
+          <article class="step"><h3>Adjust your next week</h3><p>Update your goals or availability from your dashboard by Saturday at noon ET to use them in your next plan.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="customizer" class="section demo-section">
+      <div class="wrap">
+        <div class="section-heading">
+          <h2>Explore the member dashboard</h2>
+          <p id="demoInstructions" hidden>Try the weekly schedule, check off a day, or preview an in-app reminder.</p>
+          <p id="demoFallback">Open this file in a web browser to try the interactive dashboard.</p>
+        </div>
+        <div class="demo-layout" id="demoLayout" hidden>
+          <div class="panel">
+            <div class="dashboard-toolbar">
+              <p class="dashboard-week" id="dashboardWeek"></p>
+              <button class="button secondary compact" type="button" id="openNotifications" aria-haspopup="dialog">Notifications</button>
+            </div>
+            <div class="preview-header">
+              <div><span id="previewBadge" class="preview-badge"></span><h3 id="previewTitle"></h3><p id="previewMeta" class="preview-meta"></p></div>
+              <div class="preview-progress"><span id="progressText" aria-live="polite"></span><progress id="progressBar" aria-label="Days completed" value="0" max="5"></progress></div>
+            </div>
+            <div id="previewSchedule" class="schedule"></div>
+            <p class="preview-hint">Sample activities are fixed. A subscription plan would be personalized to your preferences.</p>
+          </div>
+          <div class="panel controls">
+            <h3>Plan preferences</h3>
+            <fieldset>
+              <legend>Plan type</legend>
+              <div class="track-selector">
+                <button type="button" class="track-btn" data-track="meal" aria-pressed="true">Meal</button>
+                <button type="button" class="track-btn" data-track="fitness" aria-pressed="false">Fitness</button>
+                <button type="button" class="track-btn" data-track="study" aria-pressed="false">Study</button>
+              </div>
+            </fieldset>
+            <div><label for="goalSelect">Goal</label><select id="goalSelect"></select></div>
+            <div><label for="constraintSelect">Preference</label><select id="constraintSelect"></select></div>
+            <div>
+              <div class="range-heading"><label for="daysRange">Days per week</label><output id="daysValue" for="daysRange">5 days</output></div>
+              <input id="daysRange" type="range" min="3" max="7" value="5">
+            </div>
+            <button class="button primary" id="subscribeFromPreviewBtn" type="button">Choose Plus <span class="arrow" aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="wrap">
+        <div class="section-heading"><h2>Choose your weekly plan</h2><p>Plans are billed monthly. Eligible new subscribers can try Plus or All-Access free for 7 days.</p></div>
+        <div class="price-grid" id="pricingGrid">
+          <article class="panel price-card">
+            <h3>Starter</h3>
+            <p>Great for focusing on one core habit each week.</p>
+            <div class="price"><strong>$9</strong><span class="price-period">/ month</span></div>
+            <ul><li>1 personalized plan/week (Meal, Fitness, or Study)</li><li>New plan in your dashboard every Sunday</li><li>Basic dietary or equipment filters</li></ul>
+            <button type="button" class="button secondary" data-tier="starter" hidden>
+              Choose Starter <span class="arrow" aria-hidden="true">→</span>
+            </button>
+          </article>
+          <article class="panel price-card featured">
+            <h3>Plus</h3>
+            <p>Choose any two plan types each week.</p>
+            <div class="price"><strong>$15</strong><span class="price-period">/ month</span></div>
+            <p class="trial">7-day free trial</p>
+            <ul><li>2 personalized plans/week (any combination)</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <button type="button" class="button primary" data-tier="plus" hidden>
+              Try Plus free <span class="arrow" aria-hidden="true">→</span>
+            </button>
+          </article>
+          <article class="panel price-card">
+            <h3>All-Access</h3>
+            <p>Complete weekly coverage for health, fitness, and learning.</p>
+            <div class="price"><strong>$19</strong><span class="price-period">/ month</span></div>
+            <p class="trial">7-day free trial</p>
+            <ul><li>All 3 tracks (Meal + Fitness + Study) every week</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <button type="button" class="button secondary" data-tier="all" hidden>
+              Try All-Access free <span class="arrow" aria-hidden="true">→</span>
+            </button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="section faq-section">
+      <div class="wrap faq-layout">
+        <div class="section-heading"><h2>Common questions</h2></div>
+        <div id="faqList" class="faq-list">
+          <details><summary>Where do I find my weekly plan?</summary><p>Open your PlanPulse dashboard. Your new plan appears on Sunday at 7 AM ET with a schedule you can follow throughout the week.</p></details>
+          <details><summary>How does the 7-day free trial work?</summary><p>Eligible new subscribers can try Plus ($15/mo) or All-Access ($19/mo) free for 7 days through Stripe. After the trial, the monthly subscription starts unless you cancel before the trial ends.</p></details>
+          <details><summary>Can I switch tracks or adjust my preferences?</summary><p>Yes. Update your track, goals, or available days in your dashboard by Saturday at noon ET for the following week.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-top">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
+        <div class="footer-links">
+          <button type="button" data-legal-open="terms">Terms of Service</button>
+          <button type="button" data-legal-open="privacy">Privacy Policy</button>
+          <button type="button" data-legal-open="health">Health &amp; Fitness Disclaimer</button>
+          <button type="button" data-legal-open="device">Device &amp; Browser Compatibility</button>
+        </div>
+      </div>
+      <div class="footer-info">
+        <p>&copy; 2026 PVShoppers LLC · <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a></p>
+        <p>P&amp;V SHOPPERS LLC, 418 Broadway #6212, Albany, NY 12207</p>
+        <p><strong>Wellness &amp; Subscription Notice.</strong> PlanPulse (operated by PVShoppers LLC) provides general meal, fitness, and study planning for informational purposes only and is not medical, nutritional, or professional health advice. Subscriptions auto-renew monthly via Stripe until canceled. Seven-day free trials convert to the selected monthly rate on Day 8 unless canceled prior.</p>
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="notificationModal" aria-labelledby="notificationTitle">
+    <form method="dialog"><button class="dialog-close" aria-label="Close notifications">×</button></form>
+    <h2 id="notificationTitle">Notifications</h2>
+    <p>See how notifications could appear inside the PlanPulse app.</p>
+    <article class="notification-card">
+      <h3>Your weekly plan is ready</h3>
+      <p id="planReadyNotice"></p>
+    </article>
+    <div id="reminderExample" aria-live="polite"></div>
+    <div class="reminder-form" role="group" aria-label="Sample reminder settings">
+      <label class="reminder-toggle"><input type="checkbox" id="dailyReminder"> Remind me on scheduled days</label>
+      <div class="reminder-time"><label for="reminderTime">Reminder time (ET)</label><input type="time" id="reminderTime" required value="18:00" disabled></div>
+      <button class="button secondary compact" type="button" id="previewReminder" disabled>Preview reminder</button>
+      <small>This demo saves your reminder preference in this browser. It does not schedule or send alerts.</small>
+    </div>
+  </dialog>
+
+  <dialog id="legalModal" aria-labelledby="legalTitle">
+    <form method="dialog"><button class="dialog-close" aria-label="Close legal information">×</button></form>
+    <h2 id="legalTitle">Policies and compatibility</h2>
+    <div class="legal-tabs" role="group" aria-label="Policies">
+      <button type="button" class="legal-tab" data-legal-tab="terms">Terms</button>
+      <button type="button" class="legal-tab" data-legal-tab="privacy">Privacy</button>
+      <button type="button" class="legal-tab" data-legal-tab="health">Health disclaimer</button>
+      <button type="button" class="legal-tab" data-legal-tab="device">Device compatibility</button>
+    </div>
+    <div class="legal-content" id="legalContent"></div>
+  </dialog>
+
+  <script>
+    const TRACK_DATA = {
+      meal: {
+        label: 'Meal Plan',
+        goals: ['High-Protein Fat Loss', 'Balanced Mediterranean', 'Quick 20-Min Dinners'],
+        constraints: ['No Restrictions', 'Vegetarian', 'Gluten-Free', 'Dairy-Free'],
+        days: [
+          { day: 'Mon', title: 'Lemon Herb Chicken & Quinoa Bowl', detail: '480 kcal • 42g protein • 20 min' },
+          { day: 'Tue', title: 'Salmon, Broccoli & Sweet Potato', detail: '540 kcal • 39g protein • 25 min' },
+          { day: 'Wed', title: 'Turkey & Spinach Stuffed Peppers', detail: '450 kcal • 36g protein • 25 min' },
+          { day: 'Thu', title: 'Mediterranean Chickpea Tuna Salad', detail: '430 kcal • 35g protein • 10 min' },
+          { day: 'Fri', title: 'Garlic Shrimp & Zucchini Noodles', detail: '410 kcal • 38g protein • 15 min' },
+          { day: 'Sat', title: 'Skillet Steak Fajitas', detail: '520 kcal • 44g protein • 20 min' },
+          { day: 'Sun', title: 'Sheet-Pan Herb Cod & Asparagus', detail: '440 kcal • 40g protein • 20 min' }
+        ]
+      },
+      fitness: {
+        label: 'Fitness Plan',
+        goals: ['Lean Muscle & Strength', '30-Min Home Conditioning', '5K Run Prep'],
+        constraints: ['Full Gym', 'Dumbbells Only', 'Bodyweight Only'],
+        days: [
+          { day: 'Mon', title: 'Upper Body Push + Core', detail: '35 min • 4 exercises • 3x10–12' },
+          { day: 'Tue', title: 'Zone 2 Cardio + Mobility', detail: '30 min steady + 10 min stretch' },
+          { day: 'Wed', title: 'Lower Body Strength', detail: '35 min • Squats, RDLs & lunges' },
+          { day: 'Thu', title: 'Active Recovery Walk', detail: '25 min brisk outdoor walk' },
+          { day: 'Fri', title: 'Full-Body Metabolic Circuit', detail: '30 min • 40s on / 20s off' },
+          { day: 'Sat', title: 'Upper Body Pull & Posture', detail: '35 min • Rows & face pulls' },
+          { day: 'Sun', title: 'Rest & Guided Stretch', detail: '15 min foam rolling reset' }
+        ]
+      },
+      study: {
+        label: 'Study Plan',
+        goals: ['Certification / Exam Prep', 'Spanish Fluency Sprint', 'Python & Data Skills'],
+        constraints: ['30 Min / Day', '60 Min / Day', '90 Min / Day'],
+        days: [
+          { day: 'Mon', title: 'Core Concept Deep Dive', detail: '25 min reading + 15 min recall' },
+          { day: 'Tue', title: 'Practice Problems & Drills', detail: '30 min timed drills + error log' },
+          { day: 'Wed', title: 'Spaced Repetition Review', detail: '20 min flashcards + mini-project' },
+          { day: 'Thu', title: 'Mock Quiz & Weak-Spot Fix', detail: '25 min quiz + targeted review' },
+          { day: 'Fri', title: 'Real-World Application', detail: '40 min case study or coding' },
+          { day: 'Sat', title: 'Weekly Synthesis Summary', detail: '30 min one-page cheat sheet' },
+          { day: 'Sun', title: 'Light Preview for Next Week', detail: '15 min syllabus skim' }
+        ]
+      }
+    };
+
+    const LEGAL_DOCS = {
+      terms: `
+        <h4>Terms of Service &amp; Subscription Billing</h4>
+        <p><strong>Operator:</strong> PVShoppers LLC (operating PlanPulse), contactable at <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a>.</p>
+        <p><strong>Recurring Billing &amp; Trials:</strong> Paid plans ($9/mo Starter, $15/mo Plus, $19/mo All-Access) are billed automatically in advance on a monthly cycle via Stripe. Eligible new Plus and All-Access subscribers can start with a 7-day free trial; unless canceled before the end of Day 7, your payment method is charged the selected subscription rate on Day 8.</p>
+        <p><strong>Cancellation &amp; Refunds:</strong> You may cancel anytime through your Stripe customer portal link or by emailing <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a> before your next renewal date. Cancellations stop future billing while keeping access through the end of the current paid period.</p>
+      `,
+      privacy: `
+        <h4>Privacy Policy &amp; Data Protection</h4>
+        <p><strong>Data Collected:</strong> PlanPulse uses your Google account’s verified email address and account identifier for sign-in. It stores your plan preferences, scheduled activities, completion history, reminder settings, and Stripe customer and subscription status to operate your account. Payment card details are processed directly by Stripe and are never stored on our servers.</p>
+        <p><strong>How We Use Data:</strong> We use these details to sign you in, personalize your plans, save your activity progress, and manage your subscription. We never sell or rent your personal data.</p>
+        <p><strong>Your Rights (CCPA / GDPR):</strong> You may request access to, correction of, or deletion of your personal data at any time by emailing <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a>.</p>
+      `,
+      health: `
+        <h4>Health, Nutrition &amp; Fitness Disclaimer</h4>
+        <p>PlanPulse meal and fitness schedules are provided by PVShoppers LLC for general wellness, organization, and educational purposes only. They do not constitute medical advice, diagnosis, or treatment, nor do they replace guidance from a licensed physician or registered dietitian.</p>
+        <p>Always consult a qualified healthcare professional before beginning any new exercise program or making significant dietary changes, especially if you have pre-existing medical conditions, food allergies, or injuries. You assume full responsibility for verifying ingredients and exercising safely within your limits.</p>
+      `,
+      device: `
+        <h4>Device &amp; Browser Compatibility</h4>
+        <p><strong>Web Dashboard:</strong> Designed for responsive layout across iOS Safari, Android Chrome, and desktop Safari, Chrome, Edge, and Firefox. Supports reduced-motion accessibility preferences.</p>
+      `
+    };
+
+    const STORAGE_KEY = 'planpulse-dashboard-demo';
+    const dateLabel = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    const reminderTimeLabel = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' });
+    const weekStart = currentPlanWeek(new Date());
+    const weekKey = weekStart.toISOString().slice(0, 10);
+    const saved = loadDemo();
+    const state = {
+      track: Object.hasOwn(TRACK_DATA, saved.track) ? saved.track : 'meal',
+      goal: saved.goal,
+      constraint: saved.constraint,
+      days: Number.isInteger(saved.days) && saved.days >= 3 && saved.days <= 7 ? saved.days : 5,
+      completedDays: saved.week === weekKey ? (saved.completedDays ?? {}) : {},
+      reminderEnabled: saved.reminderEnabled === true,
+      reminderTime: /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(saved.reminderTime) ? saved.reminderTime : '18:00'
+    };
+
+    const goalSelect = document.getElementById('goalSelect');
+    const constraintSelect = document.getElementById('constraintSelect');
+    const previewSchedule = document.getElementById('previewSchedule');
+    const legalModal = document.getElementById('legalModal');
+    const notificationModal = document.getElementById('notificationModal');
+    const reminderEnabled = document.getElementById('dailyReminder');
+    const reminderTime = document.getElementById('reminderTime');
+    const previewReminder = document.getElementById('previewReminder');
+    const reminderExample = document.getElementById('reminderExample');
+
+    function addDays(date, days) {
+      const result = new Date(date);
+      result.setUTCDate(result.getUTCDate() + days);
+      return result;
+    }
+
+    function currentPlanWeek(now) {
+      const eastern = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', hourCycle: 'h23'
+      });
+      const parts = Object.fromEntries(eastern.formatToParts(now).map(part => [part.type, part.value]));
+      const date = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+      const daysSinceSunday = date.getUTCDay() || (Number(parts.hour) < 7 ? 7 : 0);
+      return addDays(date, 1 - daysSinceSunday);
+    }
+
+    function loadDemo() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveDemo() {
+      const { track, goal, constraint, days, completedDays, reminderEnabled, reminderTime } = state;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          week: weekKey, track, goal, constraint, days, completedDays, reminderEnabled, reminderTime
+        }));
+      } catch {
+        // The demo stays interactive when browser storage is unavailable.
+      }
+    }
+
+    function renderReminderSettings() {
+      reminderEnabled.checked = state.reminderEnabled;
+      reminderTime.value = state.reminderTime;
+      reminderTime.disabled = !state.reminderEnabled;
+      previewReminder.disabled = !state.reminderEnabled;
+      reminderExample.replaceChildren();
+    }
+
+    function showSampleReminder() {
+      const now = new Date('2000-01-01T' + state.reminderTime + ':00Z');
+      const plan = TRACK_DATA[state.track];
+      const example = plan.days[0];
+      const card = document.createElement('article');
+      const title = document.createElement('h3');
+      const detail = document.createElement('p');
+      card.className = 'notification-card';
+      title.textContent = example.title;
+      detail.textContent = `${plan.label} · ${example.day}, ${dateLabel.format(weekStart)} at ${reminderTimeLabel.format(now)} ET`;
+      card.append(title, detail);
+      reminderExample.replaceChildren(card);
+    }
+
+    function setTrack(track) {
+      state.track = track;
+      const data = TRACK_DATA[track];
+      for (const button of document.querySelectorAll('[data-track]')) {
+        button.setAttribute('aria-pressed', String(button.dataset.track === track));
+      }
+      if (!data.goals.includes(state.goal)) state.goal = data.goals[0];
+      if (!data.constraints.includes(state.constraint)) state.constraint = data.constraints[0];
+      goalSelect.replaceChildren(...data.goals.map(goal => new Option(goal, goal)));
+      constraintSelect.replaceChildren(...data.constraints.map(preference => new Option(preference, preference)));
+      goalSelect.value = state.goal;
+      constraintSelect.value = state.constraint;
+      renderPreview();
+    }
+
+    function updateProgress() {
+      const checked = previewSchedule.querySelectorAll('[aria-pressed="true"]').length;
+      document.getElementById('progressText').textContent = `${checked} of ${state.days} complete`;
+      const progress = document.getElementById('progressBar');
+      progress.max = state.days;
+      progress.value = checked;
+    }
+
+    function renderPreview() {
+      const data = TRACK_DATA[state.track];
+      document.getElementById('previewBadge').textContent = `${data.label} sample`;
+      document.getElementById('previewTitle').textContent = state.goal;
+      document.getElementById('previewMeta').textContent = `${state.days} days per week · ${state.constraint}`;
+      document.getElementById('daysValue').textContent = `${state.days} days`;
+      previewSchedule.innerHTML = data.days.slice(0, state.days).map((item, index) => {
+        const key = `${state.track}-${item.day}`;
+        const done = Boolean(state.completedDays[key]);
+        const date = addDays(weekStart, index);
+        return `<button type="button" class="day-check" data-day="${key}" aria-pressed="${done}">
+          <span class="sample-check" aria-hidden="true">${done ? '✓' : ''}</span>
+          <span class="day-name">${item.day}<time class="day-date" datetime="${date.toISOString().slice(0, 10)}">${date.getUTCDate()}</time></span>
+          <span><span class="day-title">${item.title}</span><span class="day-detail">${item.detail}</span></span>
+        </button>`;
+      }).join('');
+      updateProgress();
+    }
+
+    function openCheckout(tierId) {
+      location.assign('/member/?tier=' + encodeURIComponent(tierId));
+    }
+
+    function showPolicy(key) {
+      document.getElementById('legalContent').innerHTML = LEGAL_DOCS[key];
+      for (const button of document.querySelectorAll('[data-legal-tab]')) {
+        button.setAttribute('aria-pressed', String(button.dataset.legalTab === key));
+      }
+    }
+
+    const pricingGrid = document.getElementById('pricingGrid');
+    for (const button of document.querySelectorAll('[data-track]')) {
+      button.addEventListener('click', () => {
+        setTrack(button.dataset.track);
+        saveDemo();
+      });
+    }
+    for (const link of document.querySelectorAll('[data-preview-track]')) {
+      link.addEventListener('click', () => {
+        setTrack(link.dataset.previewTrack);
+        saveDemo();
+      });
+    }
+    for (const button of pricingGrid.querySelectorAll('[data-tier]')) {
+      button.addEventListener('click', () => openCheckout(button.dataset.tier));
+      button.hidden = false;
+    }
+    for (const button of document.querySelectorAll('[data-legal-open]')) {
+      button.addEventListener('click', () => {
+        showPolicy(button.dataset.legalOpen);
+        legalModal.showModal();
+      });
+    }
+    for (const button of document.querySelectorAll('[data-legal-tab]')) {
+      button.addEventListener('click', () => showPolicy(button.dataset.legalTab));
+    }
+
+    goalSelect.addEventListener('change', () => {
+      state.goal = goalSelect.value;
+      renderPreview();
+      saveDemo();
+    });
+    constraintSelect.addEventListener('change', () => {
+      state.constraint = constraintSelect.value;
+      renderPreview();
+      saveDemo();
+    });
+    const daysRange = document.getElementById('daysRange');
+    daysRange.value = String(state.days);
+    daysRange.addEventListener('input', event => {
+      state.days = Number(event.target.value);
+      renderPreview();
+      saveDemo();
+    });
+    previewSchedule.addEventListener('click', event => {
+      const button = event.target.closest('[data-day]');
+      if (!button) return;
+      const key = button.dataset.day;
+      const done = !state.completedDays[key];
+      state.completedDays[key] = done;
+      button.setAttribute('aria-pressed', String(done));
+      button.querySelector('.sample-check').textContent = done ? '✓' : '';
+      updateProgress();
+      saveDemo();
+    });
+    document.getElementById('subscribeFromPreviewBtn').addEventListener('click', () => openCheckout('plus'));
+    document.getElementById('openNotifications').addEventListener('click', () => {
+      renderReminderSettings();
+      notificationModal.showModal();
+    });
+    reminderEnabled.addEventListener('change', () => {
+      state.reminderEnabled = reminderEnabled.checked;
+      renderReminderSettings();
+      saveDemo();
+    });
+    reminderTime.addEventListener('change', () => {
+      if (reminderTime.validity.valid) state.reminderTime = reminderTime.value;
+      renderReminderSettings();
+      saveDemo();
+    });
+    previewReminder.addEventListener('click', showSampleReminder);
+    const weekLabel = `${dateLabel.format(weekStart)} – ${dateLabel.format(addDays(weekStart, 6))}`;
+    document.getElementById('dashboardWeek').textContent = `Scheduled week · ${weekLabel}`;
+    document.getElementById('planReadyNotice').textContent = `Week of ${dateLabel.format(weekStart)} · Sunday at 7 AM ET`;
+    setTrack(state.track);
+    document.getElementById('demoLayout').hidden = false;
+    document.getElementById('demoInstructions').hidden = false;
+    document.getElementById('demoFallback').hidden = true;
+  </script>
+</body>
+</html>

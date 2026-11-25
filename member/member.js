@@ -1,0 +1,316 @@
+const $ = id => document.getElementById(id);
+const query = new URLSearchParams(location.search);
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const weekdayFormat = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const notificationFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+const isEntitled = data => ['active', 'trialing'].includes(data?.account.status);
+const dateAt = date => new Date(date + 'T00:00:00Z');
+const formatDate = date => dateFormat.format(dateAt(date));
+
+let model;
+let renderVersion = 0;
+const pendingActivity = new Set();
+
+function el(tag, text, className) {
+  const element = document.createElement(tag);
+  if (text !== undefined) element.textContent = text;
+  if (className) element.className = className;
+  return element;
+}
+
+function status(message = '', error = false) {
+  $('status').textContent = message;
+  $('status').dataset.error = String(error);
+}
+
+async function api(path, payload) {
+  const response = await fetch('/api/' + path, {
+    credentials: 'same-origin',
+    method: payload === undefined ? 'GET' : 'POST',
+    headers: payload === undefined ? {} : { 'Content-Type': 'application/json' },
+    body: payload === undefined ? undefined : JSON.stringify(payload)
+  });
+  const result = response.headers.get('content-type')?.includes('application/json') ? await response.json() : null;
+  if (!response.ok || !result) {
+    const error = new Error(result?.error || 'The member service is temporarily unavailable.');
+    error.status = result ? response.status : 503;
+    throw error;
+  }
+  return result;
+}
+
+async function action(button, operation) {
+  button.disabled = true;
+  try {
+    status();
+    await operation();
+  } catch (error) {
+    status(error.message || 'Please try again.', true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function accountView(data) {
+  $('sign-in').hidden = Boolean(data);
+  $('account-actions').hidden = !data;
+  $('billing-view').hidden = !data || isEntitled(data);
+  $('workspace').hidden = !data || !isEntitled(data);
+  if (data) $('account-email').textContent = data.account.email;
+}
+
+function goToBillingPortal(button) {
+  return action(button, async () => {
+    const result = await api('billing', {});
+    location.assign(result.url);
+  });
+}
+
+function showOffers(data) {
+  $('manage-billing').hidden = !data.account.hasBilling;
+  const blocked = ['past_due', 'unpaid', 'paused', 'incomplete'].includes(data.account.status);
+  $('tiers').replaceChildren(...Object.entries(data.tiers).map(([id, tier]) => {
+    const selected = query.get('tier') === id;
+    const card = el('article', undefined, 'panel tier' + (selected ? ' selected' : ''));
+    const amount = el('p', '$' + tier.price / 100, 'price');
+    amount.append(el('small', ' / month'));
+    const units = el('p', tier.tracks === 1 ? '1 plan type per week' : tier.tracks + ' plan types per week');
+    const button = el('button', 'Choose ' + tier.name, 'button ' + (selected ? 'primary' : 'secondary'));
+    button.type = 'button';
+    button.disabled = blocked;
+    button.addEventListener('click', () => action(button, async () => {
+      const result = await api('checkout', { tier: id });
+      location.assign(result.url);
+    }));
+    card.append(el('h2', tier.name), amount, units);
+    if (tier.trial) card.append(el('p', '7-day trial for eligible new subscribers', 'fine-print'));
+    card.append(button);
+    return card;
+  }));
+  if (blocked) status('Open Manage billing to resolve your current subscription before starting another.');
+}
+
+function makeSelect(values, value) {
+  const select = el('select');
+  for (const label of values) select.add(new Option(label, label));
+  if (values.includes(value)) select.value = value;
+  return select;
+}
+
+function showPreferences(data) {
+  const count = data.tiers[data.account.tier].tracks;
+  const previous = data.preferences;
+  $('preferences-title').textContent = previous ? 'Plan preferences' : 'Set up your first plan';
+  $('preferences-detail').textContent = previous
+    ? `Changes apply to the week of ${formatDate(data.nextPreferencesWeek)}. Your saved settings apply from ${formatDate(data.preferencesWeek)}.`
+    : 'Choose what you want to work on and when you’re available. Your first plan will appear as soon as you save.';
+  $('track-legend').textContent = `Choose ${count} ${count === 1 ? 'plan type' : 'plan types'}`;
+  $('save-preferences').textContent = previous ? 'Save plan preferences' : 'Create my first plan';
+  $('tracks').replaceChildren(...Object.entries(data.tracks).map(([key, track], index) => {
+    const saved = previous?.tracks.find(setting => setting.key === key);
+    const row = el('div', undefined, 'track');
+    row.dataset.track = key;
+    const enabled = el('input');
+    enabled.type = 'checkbox';
+    enabled.checked = count === 3 || Boolean(saved) || (!previous && index < count);
+    enabled.disabled = count === 3;
+    const checkLabel = el('label', undefined, 'check-line');
+    checkLabel.append(enabled, track.name);
+    const detail = el('div', undefined, 'track-prefs');
+    detail.hidden = !enabled.checked;
+    const goal = el('label', 'Goal');
+    goal.append(makeSelect(track.goals, saved?.goal));
+    const preference = el('label', 'Preference');
+    preference.append(makeSelect(track.preferences, saved?.preference));
+    detail.append(goal, preference);
+    enabled.addEventListener('change', () => { detail.hidden = !enabled.checked; });
+    row.append(checkLabel, detail);
+    return row;
+  }));
+  $('days').replaceChildren(...weekdays.map((day, index) => {
+    const input = el('input');
+    input.type = 'checkbox';
+    input.value = String(index);
+    input.checked = previous ? previous.days.includes(index) : index < 5;
+    const label = el('label', undefined, 'check-line');
+    label.append(input, day);
+    return label;
+  }));
+}
+
+function progressLabel(data) {
+  $('progress').textContent = `${data.completed.length} of ${data.plan.length} activities complete`;
+}
+
+function showSchedule(data) {
+  $('schedule-panel').hidden = !data.plan;
+  if (!data.plan) return;
+  $('schedule-title').textContent = `Week of ${formatDate(data.week)}`;
+  progressLabel(data);
+  $('history').replaceChildren(...data.history.map(week =>
+    new Option(formatDate(week), week, false, week === data.week)
+  ));
+  const byDay = new Map();
+  for (const activity of data.plan) {
+    if (!byDay.has(activity.date)) byDay.set(activity.date, []);
+    byDay.get(activity.date).push(activity);
+  }
+  $('schedule').replaceChildren(...Array.from(byDay, ([day, activities]) => {
+    const section = el('section', undefined, 'schedule-day');
+    section.append(el('h3', weekdayFormat.format(dateAt(day))));
+    for (const activity of activities) {
+      const check = el('input');
+      check.type = 'checkbox';
+      check.checked = data.completed.includes(activity.id);
+      const activityKey = JSON.stringify([data.week, activity.id]);
+      check.disabled = pendingActivity.has(activityKey);
+      check.addEventListener('change', async () => {
+        const done = check.checked;
+        pendingActivity.add(activityKey);
+        check.disabled = true;
+        try {
+          await api('progress', { week: data.week, activity: activity.id, done });
+          for (const view of new Set([data, model])) {
+            if (view?.week !== data.week) continue;
+            view.completed = view.completed.filter(id => id !== activity.id);
+            if (done) view.completed.push(activity.id);
+          }
+          if (model?.week === data.week) progressLabel(model);
+        } catch (error) {
+          check.checked = !done;
+          status(error.message, true);
+        } finally {
+          pendingActivity.delete(activityKey);
+          check.disabled = false;
+          if (!check.isConnected && model?.week === data.week) showSchedule(model);
+        }
+      });
+      const text = el('span');
+      text.append(el('strong', activity.title), el('small', data.tracks[activity.track].name + ' · ' + activity.detail));
+      const label = el('label', undefined, 'activity');
+      label.append(check, text);
+      section.append(label);
+    }
+    return section;
+  }));
+}
+
+function showNotices(data) {
+  const unread = data.notices.filter(item => !item.read).length;
+  $('mark-read').hidden = !unread;
+  $('notifications-link').textContent = unread ? `Notifications (${unread})` : 'Notifications';
+  if (!data.notices.length) {
+    $('notices').replaceChildren(el('li', 'Your plan updates and reminders will appear here.'));
+    return;
+  }
+  $('notices').replaceChildren(...data.notices.map(notice => {
+    const item = el('li', notice.message, notice.read ? '' : 'unread');
+    const time = el('small', notificationFormat.format(new Date(notice.created * 1000)) + ' ET');
+    item.append(time);
+    return item;
+  }));
+}
+
+function showReminderSettings(data) {
+  $('reminder-enabled').checked = Boolean(data.reminderTime);
+  $('reminder-time').value = data.reminderTime ?? '18:00';
+  $('reminder-time').disabled = !data.reminderTime;
+}
+
+async function load({ week = null, notificationsOnly = false } = {}) {
+  const version = notificationsOnly ? renderVersion : ++renderVersion;
+  try {
+    const params = new URLSearchParams();
+    if (week) params.set('week', week);
+    if (!model || !isEntitled(model)) {
+      const session = query.get('session_id');
+      if (session) params.set('session_id', session);
+    }
+    const data = await api('dashboard' + (params.size ? '?' + params : ''));
+    if (version !== renderVersion) return;
+    if (notificationsOnly && isEntitled(data) && isEntitled(model)) {
+      model.notices = data.notices;
+      showNotices(model);
+      return;
+    }
+    model = data;
+    accountView(data);
+    if (!isEntitled(data)) return showOffers(data);
+    $('membership').textContent = data.tiers[data.account.tier].name + (data.account.status === 'trialing' ? ' · Trial active' : ' · Subscription active');
+    showPreferences(data);
+    showSchedule(data);
+    showNotices(data);
+    showReminderSettings(data);
+  } catch (error) {
+    if (version !== renderVersion) return;
+    if (error.status !== 401) throw error;
+    model = null;
+    accountView(null);
+    const tier = query.get('tier');
+    if (tier) $('login-link').href = '/api/auth/login?tier=' + encodeURIComponent(tier);
+  }
+}
+
+$('manage-billing').addEventListener('click', event => goToBillingPortal(event.currentTarget));
+$('member-billing').addEventListener('click', event => goToBillingPortal(event.currentTarget));
+$('history').addEventListener('change', async event => {
+  try { await load({ week: event.target.value }); }
+  catch (error) { status(error.message, true); }
+});
+$('preferences-form').addEventListener('submit', event => {
+  event.preventDefault();
+  action($('save-preferences'), async () => {
+    const tracks = [...$('tracks').querySelectorAll('[data-track]')].flatMap(row => {
+      if (!row.querySelector('input').checked) return [];
+      const [goal, preference] = row.querySelectorAll('select');
+      return [{ key: row.dataset.track, goal: goal.value, preference: preference.value }];
+    });
+    const days = [...$('days').querySelectorAll(':checked')].map(input => Number(input.value));
+    const result = await api('preferences', { tracks, days });
+    await load();
+    status('Preferences saved for the week of ' + formatDate(result.effectiveWeek) + '.');
+  });
+});
+$('reminder-enabled').addEventListener('change', event => {
+  $('reminder-time').disabled = !event.target.checked;
+});
+$('reminder-form').addEventListener('submit', event => {
+  event.preventDefault();
+  action(event.submitter, async () => {
+    const { time } = await api('reminders', { time: $('reminder-enabled').checked ? $('reminder-time').value : null });
+    model.reminderTime = time;
+    status(time ? 'Reminder preference saved.' : 'Activity reminders are off.');
+    await load({ week: model.week, notificationsOnly: true });
+  });
+});
+$('mark-read').addEventListener('click', event => action(event.currentTarget, async () => {
+  await api('notifications/read', { before: Math.max(...model.notices.map(notice => notice.created)) });
+  await load({ week: model.week, notificationsOnly: true });
+}));
+
+async function start() {
+  status();
+  try {
+    await load();
+    if (query.get('login') === 'retry') status('Sign-in expired or was canceled. Try again.', true);
+    if (query.get('billing') === 'return' && model) {
+      for (let attempt = 0; attempt < 3 && !isEntitled(model); attempt++) {
+        status('Checking your subscription with Stripe…');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await load();
+        if (!model) break;
+      }
+      if (model && isEntitled(model)) status('Your subscription is ready.');
+      else if (model) status('Stripe is still confirming your subscription. Refresh shortly before trying another checkout.');
+    }
+  } catch (error) {
+    status(error.message, true);
+  }
+}
+start();
+setInterval(() => {
+  if (!document.hidden && model && isEntitled(model)) {
+    load({ week: model.week, notificationsOnly: true }).catch(() => {});
+  }
+}, 60_000);
