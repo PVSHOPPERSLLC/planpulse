@@ -3,3 +3,5 @@
 .wrangler/
 node_modules/
 wrangler.jsonc
+wrangler.staging.jsonc
+.staging-assets/
