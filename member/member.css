@@ -105,3 +105,30 @@ input[type="checkbox"] { width: 17px; height: 17px; flex: none; accent-color: va
 #preferences-title, .reward-rules summary { cursor: pointer; }
 .reward-rules { margin-top: 12px; color: var(--muted); }
 .reward-rules ul { padding-inline-start: 22px; line-height: 1.65; }
+
+.week-days { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; margin-block: 14px; }
+.week-day { display: grid; align-content: center; justify-items: center; gap: 3px; min-height: 55px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--muted); font-size: .8rem; }
+.week-day[aria-pressed="true"] { background: var(--tint); border-color: var(--violet); color: #382175; }
+.week-day[aria-current="date"] strong { text-decoration: underline; text-underline-offset: 3px; }
+.week-day small { font-variant-numeric: tabular-nums; }
+.tracker-meter { display: block; appearance: none; width: 100%; height: 9px; border: 0; border-radius: 20px; overflow: hidden; background: var(--tint); accent-color: var(--violet); }
+.tracker-meter::-webkit-progress-bar { background: var(--tint); }
+.tracker-meter::-webkit-progress-value { background: var(--violet); border-radius: 20px; }
+.tracker-meter::-moz-progress-bar { background: var(--violet); border-radius: 20px; }
+.reward-card { margin-block: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #f9f6ff; }
+.reward-card #reward-summary { color: #382175; margin: 0 0 9px; font-weight: 780; font-size: 1.12rem; }
+.reward-card #reward-next { margin-top: 6px; font-size: .85rem; }
+.reward-milestones { display: flex; justify-content: space-between; margin-top: 5px; font-size: .76rem; color: var(--muted); }
+.reward-meter { background: #e8defd; }
+.activity:has(:checked) { background: #f0eaff; }
+#rest-day { padding: 12px 0 4px; }
+@media (max-width: 540px) { .week-days { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: no-preference) {
+  .tracker-meter::-webkit-progress-value { transition: width .3s ease; }
+  .activity, .week-day { transition: background-color .2s ease, border-color .2s ease; }
+}
+.reward-milestones { position: relative; display: block; height: 1.3em; }
+.reward-milestones span { position: absolute; white-space: nowrap; }
+.reward-milestones span:nth-child(1) { left: 16.667%; transform: translateX(-50%); }
+.reward-milestones span:nth-child(2) { left: 41.667%; transform: translateX(-50%); }
+.reward-milestones span:nth-child(3) { right: 0; }

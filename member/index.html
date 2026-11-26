@@ -50,9 +50,11 @@
         <div>
           <section class="panel" id="schedule-panel" aria-labelledby="schedule-title" hidden>
             <div class="section-title">
-              <div><h2 id="schedule-title">Weekly schedule</h2><p id="progress"></p></div>
+              <div><h2 id="schedule-title">Weekly schedule</h2><p id="progress" aria-live="polite"></p></div>
               <label class="week-select">Plan history <select id="history"></select></label>
             </div>
+            <progress class="tracker-meter" id="week-meter" aria-label="Weekly activity progress" value="0" max="1"></progress>
+            <div class="week-days" id="week-days" role="group" aria-label="Filter schedule by day"></div>
             <div id="schedule"></div>
           </section>
           <details class="panel" id="preferences-panel" open>
@@ -82,7 +84,12 @@
     </section>
     <section class="panel" id="rewards-panel" aria-labelledby="rewards-title" hidden>
       <h2 id="rewards-title">Rewards and U.S. leaderboard</h2>
-      <p id="reward-summary" aria-live="polite"></p>
+      <div class="reward-card" id="reward-card">
+        <p id="reward-summary" aria-live="polite"></p>
+        <progress class="tracker-meter reward-meter" id="reward-meter" aria-label="Weekly points toward 120" value="0" max="120"></progress>
+        <div class="reward-milestones" aria-hidden="true"><span>20 pts</span><span>50 pts</span><span>120 pts</span></div>
+        <p id="reward-next"></p>
+      </div>
       <p>Weekly milestones earn points at 3, 5, and 10 completed activities. Points have no cash value.</p>
       <details class="reward-rules">
         <summary>How to earn points</summary>

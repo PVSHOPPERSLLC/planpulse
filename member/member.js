@@ -140,15 +140,58 @@ function showPreferences(data) {
   }));
 }
 
+let selectedScheduleWeek;
+let selectedScheduleDay = '';
+const easternDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+
 function progressLabel(data) {
-  $('progress').textContent = `${data.completed.length} of ${data.plan.length} activities complete`;
+  const completed = new Set(data.completed);
+  $('progress').textContent = `${completed.size} of ${data.plan.length} complete · ${data.plan.length - completed.size} left`;
+  $('week-meter').max = Math.max(1, data.plan.length);
+  $('week-meter').value = completed.size;
+  for (const button of $('week-days').querySelectorAll('[data-date]')) {
+    const activities = data.plan.filter(activity => activity.date === button.dataset.date);
+    const done = activities.filter(activity => completed.has(activity.id)).length;
+    button.querySelector('small').textContent = activities.length ? `${done}/${activities.length}` : 'Rest';
+  }
+}
+
+function selectScheduleDay(day) {
+  selectedScheduleDay = day;
+  for (const button of $('week-days').querySelectorAll('button')) {
+    button.setAttribute('aria-pressed', String((button.dataset.date ?? '') === day));
+  }
+  for (const group of $('schedule').querySelectorAll('[data-date]')) {
+    group.hidden = Boolean(day && day !== group.dataset.date);
+  }
+  $('rest-day').hidden = !day || [...$('schedule').querySelectorAll('[data-date]')].some(group => group.dataset.date === day);
 }
 
 function showSchedule(data) {
   $('schedule-panel').hidden = !data.plan;
   if (!data.plan) return;
   $('schedule-title').textContent = `Week of ${formatDate(data.week)}`;
-  progressLabel(data);
+  if (selectedScheduleWeek !== data.week) {
+    selectedScheduleWeek = data.week;
+    selectedScheduleDay = '';
+  }
+  const today = easternDate.format(new Date());
+  const allDays = el('button', 'All days', 'week-day');
+  allDays.type = 'button';
+  allDays.addEventListener('click', () => selectScheduleDay(''));
+  $('week-days').replaceChildren(allDays, ...Array.from({ length: 7 }, (_, index) => {
+    const date = dateAt(data.week);
+    date.setUTCDate(date.getUTCDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    const button = el('button', undefined, 'week-day');
+    button.type = 'button';
+    button.dataset.date = key;
+    button.append(el('strong', weekdays[index]), el('small'));
+    button.setAttribute('aria-label', weekdayFormat.format(date));
+    if (key === today) button.setAttribute('aria-current', 'date');
+    button.addEventListener('click', () => selectScheduleDay(key));
+    return button;
+  }));
   $('history').replaceChildren(...data.history.map(week =>
     new Option(formatDate(week), week, false, week === data.week)
   ));
@@ -159,7 +202,8 @@ function showSchedule(data) {
   }
   $('schedule').replaceChildren(...Array.from(byDay, ([day, activities]) => {
     const section = el('section', undefined, 'schedule-day');
-    section.append(el('h3', weekdayFormat.format(dateAt(day))));
+    section.dataset.date = day;
+    section.append(el('h3', day === today ? 'Today · ' + weekdayFormat.format(dateAt(day)) : weekdayFormat.format(dateAt(day))));
     for (const activity of activities) {
       const check = el('input');
       check.type = 'checkbox';
@@ -178,6 +222,9 @@ function showSchedule(data) {
             if (done) view.completed.push(activity.id);
           }
           if (model?.week === data.week) progressLabel(model);
+          if (done && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            check.closest('.activity').animate([{ transform: 'scale(.98)' }, { transform: 'scale(1.012)' }, { transform: 'scale(1)' }], { duration: 260 });
+          }
           refreshRewards();
         } catch (error) {
           check.checked = !done;
@@ -196,6 +243,11 @@ function showSchedule(data) {
     }
     return section;
   }));
+  const rest = el('p', 'Rest day. There are no activities scheduled for this day.');
+  rest.id = 'rest-day';
+  $('schedule').append(rest);
+  progressLabel(data);
+  selectScheduleDay(selectedScheduleDay);
 }
 
 function showNotices(data) {
@@ -297,12 +349,26 @@ const stateCodes = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD 
 for (const state of stateCodes) $('leaderboard-state').add(new Option(state, state));
 
 let rewardsRequest = 0;
+let previousReward;
 async function refreshRewards(updateForm = false) {
   const request = ++rewardsRequest;
   try {
     const data = await api('rewards');
     if (request !== rewardsRequest || !isEntitled(model)) return;
-    $('reward-summary').textContent = data.personal.level + ' · ' + data.personal.points + ' points this week';
+    const { points, activities, level } = data.personal;
+    const next = [3, 5, 10].find(milestone => activities < milestone);
+    $('reward-summary').textContent = level + ' · ' + points + ' points this week';
+    $('reward-meter').value = points;
+    $('reward-next').textContent = next ? `${next - activities} more ${next - activities === 1 ? 'activity' : 'activities'} to the next milestone.` : 'All weekly milestones reached.';
+    if (previousReward?.week === data.week && points > previousReward.points &&
+        !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      $('reward-card').animate([
+        { transform: 'scale(.99)', boxShadow: '0 0 0 0 #7855e566' },
+        { transform: 'scale(1.01)', boxShadow: '0 0 0 8px #7855e500' },
+        { transform: 'scale(1)' }
+      ], { duration: 450 });
+    }
+    previousReward = { week: data.week, points };
     $('leaderboard-list').replaceChildren(...data.leaderboard.map(entry =>
       el('li', entry.firstName + ' · ' + entry.state + ' · ' + entry.activities + ' activities · ' + entry.points + ' points')
     ));
