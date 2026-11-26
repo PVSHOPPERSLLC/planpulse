@@ -16,6 +16,7 @@ function database() {
   db.exec(readFileSync(new URL('../migrations/0002_leaderboard.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0003_planner.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0004_planner_features.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0005_calendar_feed.sql', import.meta.url), 'utf8'));
   return {
     prepare(query) {
       const statement = db.prepare(query);
@@ -269,6 +270,17 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   assert.equal((await data(november, { session })).tasks.some(task => task.title === sharedTask.title), false);
   await data(ownerCalendar, { session, body: { action: 'revoke', email: share.email } });
   await data(sharedCalendar, { session: other }, 403);
+
+  await data('calendar-link', { body: { action: 'create' } }, 401);
+  const { url: feedUrl } = await data('calendar-link', { session, body: { action: 'create' } });
+  const feedPath = new URL(feedUrl).pathname.slice('/api/'.length);
+  const feedResponse = await request(feedPath);
+  assert.equal(feedResponse.status, 200);
+  const ics = await feedResponse.text();
+  assert.match(ics, /SUMMARY:Weekly prep\r\nRRULE:FREQ=WEEKLY/);
+  assert.doesNotMatch(ics, /Shared plans/);
+  await data('calendar-link', { session, body: { action: 'revoke' } });
+  await data(feedPath, {}, 404);
 
   stripeStatus = 'canceled';
   assert.equal((await webhook('customer.subscription.deleted')).status, 200);

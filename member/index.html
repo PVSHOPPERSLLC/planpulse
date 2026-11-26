@@ -55,6 +55,18 @@
               <label id="planner-repeat-label" hidden><input type="checkbox" id="planner-repeat"> Repeat weekly</label>
               <button class="button primary" id="planner-add">Add task</button>
             </form>
+            <details id="calendar-connect">
+              <summary>Connect Google or Apple Calendar</summary>
+              <p>Create a private link for your personal tasks. Anyone with the link can read those tasks. Creating a new link replaces your previous one.</p>
+              <button type="button" class="button secondary" id="calendar-create">Create new calendar link</button>
+              <button type="button" class="button secondary" id="calendar-revoke">Revoke calendar link</button>
+              <p id="calendar-link-status" role="status"></p>
+              <div id="calendar-link-result" hidden>
+                <label>Private calendar URL <input id="calendar-url" type="url" readonly></label>
+                <p>In Google Calendar on a computer, go to Other calendars → From URL and paste the link.</p>
+                <a class="button secondary" id="calendar-apple">Open in Apple Calendar</a>
+              </div>
+            </details>
             <form id="planner-share" hidden>
               <h3>Share this calendar</h3>
               <label>Google sign-in email <input id="planner-guest" type="email" required maxlength="254"></label>

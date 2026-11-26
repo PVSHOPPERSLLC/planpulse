@@ -1,3 +1,4 @@
+import { calendarFeed } from './calendar.mjs';
 import { rewardLevel, sharedProfile } from './rewards.mjs';
 import { buildPlan, scheduleClock, TIERS, TRACK_OPTIONS, validatePreferences } from './plans.mjs';
 
@@ -514,6 +515,18 @@ async function handle(request, env) {
   const url = new URL(request.url);
   const endpoint = url.pathname;
   const route = request.method + ' ' + endpoint;
+  if (request.method === 'GET' && endpoint.startsWith('/api/calendar/')) {
+    const token = /^\/api\/calendar\/([A-Za-z0-9_-]{43})\.ics$/.exec(endpoint)?.[1];
+    demand(token, 404, 'Calendar link not found.');
+    const feed = await sql(env, 'SELECT member FROM planner_calendar_feeds WHERE digest = ?',
+      hex(await sha256(token))).first();
+    demand(feed, 404, 'Calendar link not found.');
+    const tasks = await rows(sql(env, 'SELECT id, day, title, repeats FROM planner_tasks WHERE member = ? AND shared = 0 ORDER BY day, id', feed.member));
+    return new Response(calendarFeed(tasks), {
+      headers: { 'Content-Type': 'text/calendar; charset=utf-8', 'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex' }
+    });
+  }
   if (route === 'POST /api/stripe/webhook') return stripeWebhook(request, env);
   if (request.method === 'POST') {
     demand(request.headers.get('Origin') === appUrl(env).origin, 403, 'Request origin rejected.');
@@ -532,11 +545,23 @@ async function handle(request, env) {
   const routes = new Set([
     'GET /api/dashboard', 'POST /api/checkout', 'POST /api/billing',
     'POST /api/preferences', 'POST /api/progress', 'POST /api/reminders', 'POST /api/notifications/read',
-    'GET /api/rewards', 'POST /api/rewards/profile', 'GET /api/planner', 'POST /api/planner'
+    'GET /api/rewards', 'POST /api/rewards/profile', 'GET /api/planner', 'POST /api/planner', 'POST /api/calendar-link'
   ]);
   demand(routes.has(route), 404, 'This endpoint was not found.');
   const member = await getMember(request, env);
   demand(member, 401, 'Sign in to access your account.');
+  if (route === 'POST /api/calendar-link') {
+    const input = await readJson(request);
+    if (input?.action === 'revoke') {
+      await sql(env, 'DELETE FROM planner_calendar_feeds WHERE member = ?', member.id).run();
+      return json({ url: null });
+    }
+    demand(input?.action === 'create', 400, 'Choose a calendar link action.');
+    const token = randomToken();
+    await sql(env, `INSERT INTO planner_calendar_feeds VALUES (?, ?)
+      ON CONFLICT(member) DO UPDATE SET digest = excluded.digest`, member.id, hex(await sha256(token))).run();
+    return json({ url: new URL('/api/calendar/' + token + '.ics', appUrl(env)).href });
+  }
   const clock = scheduleClock();
   if (route === 'GET /api/dashboard') {
     return json(await dashboard(env, member, clock, url.searchParams.get('week'), url.searchParams.get('session_id')));

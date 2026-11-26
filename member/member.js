@@ -462,6 +462,7 @@ let plannerData = null;
 const monthFormat = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 function renderPlanner() {
+  $('calendar-connect').hidden = Boolean(plannerOwner);
   const calendars = [new Option('Personal planner', '')];
   if (plannerData?.canShare || plannerOwner === 'mine') calendars.push(new Option('My shared planner', 'mine'));
   for (const guest of plannerData?.incoming ?? []) calendars.push(new Option('Shared by ' + guest.email, guest.id));
@@ -604,3 +605,23 @@ $('planner-share').addEventListener('submit', async event => {
   const field = $('planner-guest');
   if (await updatePlanner({ action: 'share', email: field.value, permission: $('planner-permission').value })) field.value = '';
 });
+
+for (const [id, mode] of [['calendar-create', 'create'], ['calendar-revoke', 'revoke']]) {
+  $(id).addEventListener('click', async () => {
+    $('calendar-create').disabled = true;
+    $('calendar-revoke').disabled = true;
+    try {
+      const { url } = await api('calendar-link', { action: mode });
+      $('calendar-url').value = url ?? '';
+      if (url) $('calendar-apple').href = url.replace(/^https:/, 'webcal:');
+      else $('calendar-apple').removeAttribute('href');
+      $('calendar-link-result').hidden = !url;
+      $('calendar-link-status').textContent = url ? 'Copy this link before leaving the page.' : 'Calendar link revoked.';
+    } catch (error) {
+      $('calendar-link-status').textContent = error.message;
+    } finally {
+      $('calendar-create').disabled = false;
+      $('calendar-revoke').disabled = false;
+    }
+  });
+}
