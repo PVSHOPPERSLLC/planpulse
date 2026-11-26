@@ -650,7 +650,7 @@
       progress.max = state.days;
       progress.value = checked;
       const activityCount = Object.values(state.completedDays).filter(done => done === true).length;
-      const points = activityCount * 10;
+      const points = (activityCount >= 3 ? 20 : 0) + (activityCount >= 5 ? 30 : 0) + (activityCount >= 10 ? 70 : 0);
       const level = points >= 120 ? 'In Rhythm' : points >= 50 ? 'Building Momentum' : 'Getting Started';
       document.getElementById('demoReward').textContent = level + ' · ' + points + ' sample points';
     }
