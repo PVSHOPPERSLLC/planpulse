@@ -1,3 +1,4 @@
+import { rewardLevel, sharedProfile } from './rewards.mjs';
 import { buildPlan, scheduleClock, TIERS, TRACK_OPTIONS, validatePreferences } from './plans.mjs';
 
 const ACTIVE = new Set(['active', 'trialing']);
@@ -379,6 +380,21 @@ async function changeProgress(env, member, input) {
   return json({ done: input.done });
 }
 
+async function rewards(env, member, week) {
+  const [personal, profile, board] = await Promise.all([
+    sql(env, 'SELECT COUNT(*) AS activities FROM progress WHERE member = ? AND week = ?', member.id, week).first(),
+    sql(env, 'SELECT first_name AS firstName, state FROM leaderboard_profiles WHERE member = ?', member.id).first(),
+    rows(sql(env, `SELECT l.first_name AS firstName, l.state, COUNT(*) AS activities
+      FROM leaderboard_profiles l JOIN progress p ON p.member = l.member
+      JOIN members m ON m.id = l.member
+      WHERE p.week = ? AND m.billing_status IN ('active','trialing')
+      GROUP BY l.member, l.first_name, l.state
+      ORDER BY activities DESC, l.first_name, l.state, l.member LIMIT 25`, week))
+  ]);
+  return json({ week, profile, personal: rewardLevel(personal.activities),
+    leaderboard: board.map(entry => ({ ...entry, points: rewardLevel(entry.activities).points })) });
+}
+
 async function handle(request, env) {
   const url = new URL(request.url);
   const endpoint = url.pathname;
@@ -400,7 +416,8 @@ async function handle(request, env) {
   }
   const routes = new Set([
     'GET /api/dashboard', 'POST /api/checkout', 'POST /api/billing',
-    'POST /api/preferences', 'POST /api/progress', 'POST /api/reminders', 'POST /api/notifications/read'
+    'POST /api/preferences', 'POST /api/progress', 'POST /api/reminders', 'POST /api/notifications/read',
+    'GET /api/rewards', 'POST /api/rewards/profile'
   ]);
   demand(routes.has(route), 404, 'This endpoint was not found.');
   const member = await getMember(request, env);
@@ -419,7 +436,20 @@ async function handle(request, env) {
   }
 
   const eligible = await requireAccess(env, member);
+  if (route === 'GET /api/rewards') return rewards(env, eligible, clock.week);
   const input = await readJson(request);
+  if (route === 'POST /api/rewards/profile') {
+    const profile = sharedProfile(input);
+    demand(profile !== null, 400, 'Enter a first name and a valid U.S. state.');
+    if (profile) {
+      await sql(env, `INSERT INTO leaderboard_profiles VALUES (?, ?, ?)
+        ON CONFLICT(member) DO UPDATE SET first_name = excluded.first_name, state = excluded.state`,
+        member.id, profile.firstName, profile.state).run();
+    } else {
+      await sql(env, 'DELETE FROM leaderboard_profiles WHERE member = ?', member.id).run();
+    }
+    return rewards(env, eligible, clock.week);
+  }
   if (route === 'POST /api/preferences') return changePreferences(env, eligible, input, clock);
   if (route === 'POST /api/progress') return changeProgress(env, eligible, input);
   if (route === 'POST /api/reminders') {

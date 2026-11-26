@@ -57,6 +57,7 @@ function accountView(data) {
   $('account-actions').hidden = !data;
   $('billing-view').hidden = !data || isEntitled(data);
   $('workspace').hidden = !data || !isEntitled(data);
+  if (!data || !isEntitled(data)) $('rewards-panel').hidden = true;
   if (data) $('account-email').textContent = data.account.email;
 }
 
@@ -177,6 +178,7 @@ function showSchedule(data) {
             if (done) view.completed.push(activity.id);
           }
           if (model?.week === data.week) progressLabel(model);
+          refreshRewards();
         } catch (error) {
           check.checked = !done;
           status(error.message, true);
@@ -242,6 +244,7 @@ async function load({ week = null, notificationsOnly = false } = {}) {
     showSchedule(data);
     showNotices(data);
     showReminderSettings(data);
+    refreshRewards(true);
   } catch (error) {
     if (version !== renderVersion) return;
     if (error.status !== 401) throw error;
@@ -289,6 +292,47 @@ $('mark-read').addEventListener('click', event => action(event.currentTarget, as
   await load({ week: model.week, notificationsOnly: true });
 }));
 
+const stateCodes = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC'.split(' ');
+for (const state of stateCodes) $('leaderboard-state').add(new Option(state, state));
+
+let rewardsRequest = 0;
+async function refreshRewards(updateForm = false) {
+  const request = ++rewardsRequest;
+  try {
+    const data = await api('rewards');
+    if (request !== rewardsRequest || !isEntitled(model)) return;
+    $('reward-summary').textContent = data.personal.level + ' · ' + data.personal.points + ' points this week';
+    $('leaderboard-list').replaceChildren(...data.leaderboard.map(entry =>
+      el('li', entry.firstName + ' · ' + entry.state + ' · ' + entry.activities + ' activities · ' + entry.points + ' points')
+    ));
+    $('leaderboard-empty').hidden = data.leaderboard.length > 0;
+    if (updateForm) {
+      $('leaderboard-enabled').checked = Boolean(data.profile);
+      $('leaderboard-fields').hidden = !data.profile;
+      $('leaderboard-name').value = data.profile?.firstName ?? '';
+      $('leaderboard-state').value = data.profile?.state ?? '';
+    }
+    $('rewards-panel').hidden = false;
+  } catch {
+    if (request === rewardsRequest) $('rewards-panel').hidden = true;
+  }
+}
+
+$('leaderboard-enabled').addEventListener('change', event => {
+  $('leaderboard-fields').hidden = !event.target.checked;
+});
+$('leaderboard-form').addEventListener('submit', event => {
+  event.preventDefault();
+  action(event.submitter, async () => {
+    const enabled = $('leaderboard-enabled').checked;
+    await api('rewards/profile', {
+      enabled, firstName: $('leaderboard-name').value, state: $('leaderboard-state').value
+    });
+    await refreshRewards(true);
+    status(enabled ? 'Leaderboard sharing enabled.' : 'Your leaderboard profile is private.');
+  });
+});
+
 async function start() {
   status();
   try {
@@ -311,6 +355,7 @@ async function start() {
 start();
 setInterval(() => {
   if (!document.hidden && model && isEntitled(model)) {
+    refreshRewards();
     load({ week: model.week, notificationsOnly: true }).catch(() => {});
   }
 }, 60_000);

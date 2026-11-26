@@ -80,6 +80,24 @@
         </aside>
       </div>
     </section>
+    <section class="panel" id="rewards-panel" aria-labelledby="rewards-title" hidden>
+      <h2 id="rewards-title">Rewards and U.S. leaderboard</h2>
+      <p id="reward-summary" aria-live="polite"></p>
+      <p>Get 10 points for each activity checked off in your current weekly plan. Points have no cash value.</p>
+      <form id="leaderboard-form">
+        <fieldset>
+          <legend>Leaderboard profile</legend>
+          <label class="check-line"><input id="leaderboard-enabled" type="checkbox"> Share my first name, state, and weekly activity count with other members</label>
+          <div class="track-prefs" id="leaderboard-fields" hidden>
+            <label>First name <input id="leaderboard-name" maxlength="30" autocomplete="given-name"></label>
+            <label>State <select id="leaderboard-state"><option value="">Select your state</option></select></label>
+          </div>
+        </fieldset>
+        <button class="button secondary">Save sharing preference</button>
+      </form>
+      <ol id="leaderboard-list"></ol>
+      <p id="leaderboard-empty">No shared activity for this week yet.</p>
+    </section>
   </main>
   <footer class="wrap footer"><a href="/">PlanPulse</a><a href="mailto:App@pvshoppersllc.com">Support</a><span>PVShoppers LLC</span></footer>
 </body>

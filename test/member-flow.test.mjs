@@ -12,6 +12,7 @@ function database() {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
   db.exec(readFileSync(new URL('../migrations/0001_members.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0002_leaderboard.sql', import.meta.url), 'utf8'));
   return {
     prepare(query) {
       const statement = db.prepare(query);
@@ -173,6 +174,16 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   await data('progress', { session, body: completion });
   await data('progress', { session, body: completion });
   await data('progress', { session, body: { ...completion, activity: 'arbitrary-activity' } }, 404);
+  let rewards = await data('rewards', { session });
+  assert.equal(rewards.personal.points, 10);
+  assert.equal(rewards.profile, null);
+  assert.deepEqual(rewards.leaderboard, []);
+  await data('rewards/profile', { session, body: { enabled: true, firstName: 'first@example.com', state: 'NY' } }, 400);
+  rewards = await data('rewards/profile', { session, body: { enabled: true, firstName: 'Alex', state: 'NY' } });
+  assert.deepEqual(rewards.leaderboard, [{ firstName: 'Alex', state: 'NY', activities: 1, points: 10 }]);
+  rewards = await data('rewards/profile', { session, body: { enabled: false } });
+  assert.equal(rewards.profile, null);
+  assert.deepEqual(rewards.leaderboard, []);
   await data('reminders', { session, body: { time: '24:00' } }, 400);
   await data('reminders', { session, body: { time: '12:00' } });
   dashboard = await data('dashboard', { session });
