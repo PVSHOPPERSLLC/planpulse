@@ -85,7 +85,9 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
       assert.equal(options.body.get('customer'), 'cus_A');
       assert.equal(options.body.get('subscription_data[trial_period_days]'), '7');
       assert.match(options.body.get('success_url'), /session_id=\{CHECKOUT_SESSION_ID\}$/);
-      assert.match(options.headers['Idempotency-Key'], /^planpulse-checkout-/);
+      assert.match(options.headers['Idempotency-Key'], /^planpulse-checkout-v2-/);
+      assert.equal(options.body.get('allowed_payment_method_types[0]'), 'card');
+      assert.equal(options.body.has('payment_method_types[0]'), false);
       existingCheckout = { id: 'cs_test_A', url: 'https://checkout.stripe.com/c/pay/test', livemode: false, status: 'open' };
       return Response.json(existingCheckout);
     }

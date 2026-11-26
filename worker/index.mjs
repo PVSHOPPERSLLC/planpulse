@@ -246,12 +246,12 @@ async function checkout(env, member, input) {
     'line_items[0][price]': priceId, 'line_items[0][quantity]': '1',
     'metadata[planpulse_member]': member.id,
     'subscription_data[metadata][planpulse_member]': member.id,
-    payment_method_collection: 'always', 'payment_method_types[0]': 'card', expires_at: String(attempt.expires - 60),
+    payment_method_collection: 'always', 'allowed_payment_method_types[0]': 'card', expires_at: String(attempt.expires - 60),
     success_url: new URL('/member/?billing=return', appUrl(env)).href + '&session_id={CHECKOUT_SESSION_ID}',
     cancel_url: new URL('/member/?billing=canceled', appUrl(env)).href,
   };
   if (attempt.trial) params['subscription_data[trial_period_days]'] = String(attempt.trial);
-  const session = await stripe(env, 'checkout/sessions', params, 'planpulse-checkout-' + attempt.id);
+  const session = await stripe(env, 'checkout/sessions', params, 'planpulse-checkout-v2-' + attempt.id);
   await sql(env, 'UPDATE checkout_attempts SET stripe_session = ? WHERE member = ? AND id = ?',
     session.id, member.id, attempt.id).run();
   demand(session.url, 503, 'Checkout is temporarily unavailable.');
