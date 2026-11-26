@@ -225,6 +225,23 @@
       .sample-sheet { padding: 16px; box-shadow: 0 18px 42px #14092984, 6px 6px 0 #a889f45c; }
       .sample-list li { grid-template-columns: 26px 1fr 14px; gap: 5px; }
     }
+    .hero-tracks { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 5px; margin-top: 12px; }
+    .hero-tracks button { min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: .8rem; font-weight: 700; }
+    .hero-tracks button[aria-pressed="true"] { background: var(--soft); border-color: #c8b9f7; color: var(--accent-dark); }
+    .sample-demo-link { display: block; }
+    .sample-demo-link:hover { background: #e8dfff; }
+    .footer-anchor { font-size: .79rem; font-weight: 650; }
+    .feedback-panel { display: flex; flex-wrap: wrap; gap: 9px; }
+    .feedback-panel p { flex-basis: 100%; color: var(--muted); font-size: .86rem; line-height: 1.5; }
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+      .button, .track-link, .hero-tracks button { transition: background-color .17s, border-color .17s, box-shadow .17s; }
+      .sample-list.refreshing { animation: schedule-enter .28s ease-out; }
+      @keyframes schedule-enter {
+        from { opacity: .65; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
   </style>
 </head>
 <body id="top">
@@ -247,8 +264,8 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="delivery">Member access is being set up</p>
-            <h1 id="hero-title">A better week <span>starts on Sunday.</span></h1>
-            <p>Your meal, fitness, and study plans in one dashboard. See what’s scheduled each day and check it off as you go.</p>
+            <h1 id="hero-title">Plan the week <span>you actually have.</span></h1>
+            <p>Make room for the meals, workouts, and study sessions that fit your week. See what’s scheduled, then check it off as you go.</p>
             <div class="hero-actions">
               <a class="button primary" href="#pricing">See pricing <span class="arrow" aria-hidden="true">→</span></a>
               <a class="button secondary" href="#customizer">Explore the dashboard</a>
@@ -260,18 +277,23 @@
             <article class="sample-sheet" aria-labelledby="sample-title">
               <div class="sample-top">
                 <span class="sample-brand"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</span>
-                <span class="sample-type">Dashboard preview</span>
+                <span class="sample-type">Sample week</span>
+              </div>
+              <div class="hero-tracks" role="group" aria-label="Preview a plan type" hidden>
+                <button type="button" data-hero-track="meal" aria-pressed="true">Meal</button>
+                <button type="button" data-hero-track="fitness" aria-pressed="false">Fitness</button>
+                <button type="button" data-hero-track="study" aria-pressed="false">Study</button>
               </div>
               <h2 class="sample-title" id="sample-title">Your weekly meal plan</h2>
-              <p class="sample-sub">High-protein dinners · Monday–Friday</p>
-              <ul class="sample-list">
+              <p class="sample-sub" id="hero-sample-detail">High-protein dinners · Monday–Friday</p>
+              <ul class="sample-list" id="hero-sample-days">
                 <li><span>Mon</span><strong>Lemon herb chicken &amp; quinoa</strong><span class="sample-check checked" aria-hidden="true">✓</span></li>
                 <li><span>Tue</span><strong>Salmon, broccoli &amp; sweet potato</strong><span class="sample-check" aria-hidden="true"></span></li>
                 <li><span>Wed</span><strong>Turkey &amp; spinach stuffed peppers</strong><span class="sample-check" aria-hidden="true"></span></li>
                 <li><span>Thu</span><strong>Chickpea tuna salad</strong><span class="sample-check" aria-hidden="true"></span></li>
                 <li><span>Fri</span><strong>Garlic shrimp &amp; zucchini noodles</strong><span class="sample-check" aria-hidden="true"></span></li>
               </ul>
-              <p class="sample-delivery">See your schedule and track your progress</p>
+              <a class="sample-delivery sample-demo-link" href="#customizer" data-preview-track="meal">Try this schedule in the dashboard <span aria-hidden="true">↓</span></a>
             </article>
           </div>
         </div>
@@ -385,6 +407,19 @@
         </div>
       </div>
     </section>
+    <section id="feedback" class="section faq-section" aria-labelledby="feedback-title">
+      <div class="wrap faq-layout">
+        <div class="section-heading">
+          <h2 id="feedback-title">Help shape PlanPulse</h2>
+          <p>Tell us what fit your week, what got in the way, or what you’d like your next plan to include.</p>
+        </div>
+        <div class="panel feedback-panel">
+          <a class="button secondary" href="mailto:App@pvshoppersllc.com?subject=PlanPulse%20feedback">Email feedback</a>
+          <a class="button secondary" href="mailto:App@pvshoppersllc.com?subject=PlanPulse%20website%20review">Share a review</a>
+          <p>Feedback and reviews go privately to the PlanPulse team.</p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -392,6 +427,7 @@
       <div class="footer-top">
         <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
         <div class="footer-links">
+          <a class="footer-anchor" href="#feedback">Feedback &amp; reviews</a>
           <a href="#sponsor" style="font-size:.79rem;font-weight:650">Sponsor PlanPulse</a>
           <button type="button" data-legal-open="terms">Terms of Service</button>
           <button type="button" data-legal-open="privacy">Privacy Policy</button>
@@ -707,6 +743,40 @@
     const weekLabel = `${dateLabel.format(weekStart)} – ${dateLabel.format(addDays(weekStart, 6))}`;
     document.getElementById('dashboardWeek').textContent = `Scheduled week · ${weekLabel}`;
     document.getElementById('planReadyNotice').textContent = `Week of ${dateLabel.format(weekStart)} · Sunday at 7 AM ET`;
+    const heroTrackButtons = [...document.querySelectorAll('[data-hero-track]')];
+    const heroSample = document.getElementById('hero-sample-days');
+    const heroDemoLink = document.querySelector('.sample-demo-link');
+    function showHeroTrack(track) {
+      const sample = TRACK_DATA[track];
+      document.getElementById('sample-title').textContent = 'Your weekly ' + sample.label.toLowerCase();
+      document.getElementById('hero-sample-detail').textContent = sample.goals[0] + ' · Monday–Friday';
+      heroSample.replaceChildren(...sample.days.slice(0, 5).map(item => {
+        const row = document.createElement('li');
+        const day = document.createElement('span');
+        const title = document.createElement('strong');
+        const check = document.createElement('span');
+        day.textContent = item.day;
+        title.textContent = item.title;
+        check.className = 'sample-check';
+        check.setAttribute('aria-hidden', 'true');
+        row.append(day, title, check);
+        return row;
+      }));
+      for (const button of heroTrackButtons) {
+        button.setAttribute('aria-pressed', String(button.dataset.heroTrack === track));
+      }
+      heroDemoLink.dataset.previewTrack = track;
+    }
+
+    for (const button of heroTrackButtons) {
+      button.addEventListener('click', () => {
+        showHeroTrack(button.dataset.heroTrack);
+        heroSample.classList.remove('refreshing');
+        requestAnimationFrame(() => requestAnimationFrame(() => heroSample.classList.add('refreshing')));
+      });
+    }
+    showHeroTrack('meal');
+    document.querySelector('.hero-tracks').hidden = false;
     setTrack(state.track);
     document.getElementById('demoLayout').hidden = false;
     document.getElementById('demoInstructions').hidden = false;
