@@ -8,6 +8,26 @@
   <link rel="icon" href="/favicon.ico?v=1" sizes="any">
   <link rel="stylesheet" href="/guide.css">
   <link rel="stylesheet" href="/planpulse.css?v=1">
+  <style>
+    .tier-grid { align-items: stretch; }
+    .tier-grid .price-card { min-width: 0; }
+    .tier-grid .tier-label {
+      align-self: flex-start; margin: 0 0 12px; padding: 4px 10px;
+      border-radius: 99px; background: #f2edff; color: #432699;
+      font-size: .82rem; font-weight: 750;
+    }
+    .tier-grid .featured {
+      background: linear-gradient(145deg, #422582, #211535 82%);
+      border-color: #6041ab; box-shadow: 0 14px 34px #32195b30;
+    }
+    .tier-grid .featured .tier-label { background: #dfceff; color: #301b56; }
+    .tier-grid .featured .tier-cta { background: #dfceff; color: #271445; }
+    .tier-grid .featured .tier-cta:hover { background: #f2eaff; color: #271445; }
+    .tier-grid .featured .tier-cta:focus-visible { outline-color: #dfceff; }
+    .tier-grid .tier-cta { display: flex; justify-content: center; width: 100%; text-align: center; }
+    .tier-grid .guide-actions { width: 100%; margin-bottom: 0; }
+    .tier-grid .price-period { white-space: nowrap; }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -19,7 +39,30 @@
   <main id="main-content" tabindex="-1" class="wrap guide">
     <h1>Find your membership</h1>
     <p class="intro">Pick one, two, or three weekly tracks to fit your routine. New subscriptions are currently available for testing on staging.</p>
-    <div class="price-grid"><article id="starter" class="panel price-card"><h2>Starter</h2><div class="price"><strong>$9</strong><span class="price-period">/ month</span></div><p>One weekly track. Start with Meal, Fitness, or Study.</p><div class="guide-actions"><a class="button secondary" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=starter">Test Starter</a></div></article><article id="plus" class="panel price-card featured"><h2>Plus</h2><div class="price"><strong>$15</strong><span class="price-period">/ month</span></div><p>Two weekly tracks. Combine any two around your schedule.</p><div class="guide-actions"><a class="button secondary" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=plus">Test Plus</a></div></article><article id="all" class="panel price-card"><h2>All-Access</h2><div class="price"><strong>$19</strong><span class="price-period">/ month</span></div><p>All three weekly tracks in one dashboard.</p><div class="guide-actions"><a class="button secondary" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=all">Test All-Access</a></div></article></div><section class="panel membership-details">
+    <div class="price-grid tier-grid">
+      <article id="starter" class="panel price-card">
+        <p class="tier-label">One focus</p>
+        <h2>Starter</h2>
+        <div class="price"><strong>$9</strong><span class="price-period">/ month</span></div>
+        <p>Pick one weekly track to build a routine around.</p>
+        <div class="guide-actions"><a class="button secondary tier-cta" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=starter">Test Starter</a></div>
+      </article>
+      <article id="plus" class="panel price-card featured">
+        <p class="tier-label">Recommended</p>
+        <h2>Plus</h2>
+        <div class="price"><strong>$15</strong><span class="price-period">/ month</span></div>
+        <p>Pair any two tracks, like Meal and Fitness, on one weekly schedule.</p>
+        <div class="guide-actions"><a class="button secondary tier-cta" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=plus">Test Plus</a></div>
+      </article>
+      <article id="all" class="panel price-card">
+        <p class="tier-label">All three tracks</p>
+        <h2>All-Access</h2>
+        <div class="price"><strong>$19</strong><span class="price-period">/ month</span></div>
+        <p>Plan meals, movement, and study together.</p>
+        <div class="guide-actions"><a class="button secondary tier-cta" href="https://planpulse-staging.delicate-cake-27e2.workers.dev/member/?tier=all">Test All-Access</a></div>
+      </article>
+    </div>
+    <section class="panel membership-details">
       <h2>What comes with each plan</h2>
       <ul><li>A schedule based on the tracks, goals, and days you select.</li><li>Activity checkoffs, weekly milestones, and plan history.</li><li>Optional reminders in your member dashboard.</li></ul>
       <p>Compare the tracks with a sample before you choose a membership.</p>
