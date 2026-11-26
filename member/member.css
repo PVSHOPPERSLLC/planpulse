@@ -132,3 +132,14 @@ input[type="checkbox"] { width: 17px; height: 17px; flex: none; accent-color: va
 .reward-milestones span:nth-child(1) { left: 16.667%; transform: translateX(-50%); }
 .reward-milestones span:nth-child(2) { left: 41.667%; transform: translateX(-50%); }
 .reward-milestones span:nth-child(3) { right: 0; }
+
+.planner-navigation { margin-block: 1rem; align-items: center; }
+.planner-navigation h2 { font-size: 1.15rem; margin: 0; text-align: center; }
+.planner-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; text-align: center; }
+.planner-grid button { position: relative; min-height: 2.7rem; padding: .25rem; border: 1px solid #ded6f2; border-radius: .55rem; background: #fff; color: #24163d; cursor: pointer; }
+.planner-grid button[aria-pressed="true"] { background: #5834c8; color: #fff; }
+.planner-grid button.has-items::after { content: ''; position: absolute; bottom: .2rem; left: calc(50% - .125rem); width: .25rem; height: .25rem; border-radius: 50%; background: currentColor; }
+#planner-items li { margin-block: .4rem; }
+#planner-items button { margin-inline-start: .55rem; }
+#planner-form { display: grid; gap: .5rem; justify-items: start; }
+#planner-title { width: 100%; }

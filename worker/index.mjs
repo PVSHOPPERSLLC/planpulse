@@ -395,6 +395,112 @@ async function rewards(env, member, week) {
     leaderboard: board.map(entry => ({ ...entry, points: rewardLevel(entry.activities).points })) });
 }
 
+const plannerDate = day => new Date(day + 'T00:00:00Z');
+const dateKey = date => date.toISOString().slice(0, 10);
+const validPlannerDay = day => typeof day === 'string' && Number.isFinite(plannerDate(day).getTime()) &&
+  dateKey(plannerDate(day)) === day;
+
+function occursOn(task, day) {
+  return task.day === day || (task.repeats && day > task.day &&
+    plannerDate(day).getUTCDay() === plannerDate(task.day).getUTCDay());
+}
+
+async function planner(request, env, member, url, clock) {
+  const month = url.searchParams.get('month');
+  demand(/^20[0-9]{2}-(0[1-9]|1[0-2])$/.test(month ?? ''), 400, 'Choose a valid month.');
+  const email = member.email.toLowerCase();
+  const sharedOwner = url.searchParams.get('owner');
+  const shared = Number(Boolean(sharedOwner));
+  const owner = sharedOwner && sharedOwner !== 'mine'
+    ? await sql(env, `SELECT members.*, planner_shares.permission FROM members JOIN planner_shares
+        ON members.id = planner_shares.owner WHERE members.id = ? AND planner_shares.email = ?`,
+      sharedOwner, email).first()
+    : member;
+  demand(owner, 403, 'You no longer have access to this planner.');
+  const input = request.method === 'POST' ? await readJson(request) : null;
+  const canEdit = owner.id === member.id || owner.permission === 'edit';
+  const weekly = !shared && url.searchParams.get('weekly') === '1';
+  const billing = shared || weekly || input?.repeats || input?.action === 'share'
+    ? await getBilling(env, owner) : owner;
+  const active = ACTIVE.has(billing.billing_status);
+  const plus = active && ['plus', 'all'].includes(billing.tier);
+  const all = active && billing.tier === 'all';
+  demand(!shared || all, 403, 'This shared planner requires an active All-Access membership.');
+  if (request.method === 'POST') {
+    const action = input?.action;
+    demand(canEdit, 403, 'You have view-only access.');
+    if (action === 'share' || action === 'revoke') {
+      demand(sharedOwner === 'mine' && all, 403, 'Only the All-Access planner owner can manage sharing.');
+      const guest = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+      demand(guest.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest) && guest !== email,
+        400, 'Enter the Google sign-in email of the person you want to share with.');
+      if (action === 'revoke') {
+        await sql(env, 'DELETE FROM planner_shares WHERE owner = ? AND email = ?', owner.id, guest).run();
+      } else {
+        demand(['view', 'edit'].includes(input.permission), 400, 'Choose Can view or Can edit.');
+        await sql(env, `INSERT INTO planner_shares VALUES (?, ?, ?)
+          ON CONFLICT(owner, email) DO UPDATE SET permission = excluded.permission`,
+        owner.id, guest, input.permission).run();
+      }
+    } else if (action === 'add') {
+      const title = typeof input.title === 'string' ? input.title.trim() : '';
+      demand(validPlannerDay(input.day) && input.day.startsWith(month + '-') && title.length > 0 &&
+        title.length <= 120, 400, 'Enter a task of up to 120 characters and a valid date.');
+      demand(!input.repeats || plus, 403, 'Weekly repeats require Plus or All-Access.');
+      await sql(env, 'INSERT INTO planner_tasks (id, member, day, title, shared, repeats) VALUES (?, ?, ?, ?, ?, ?)',
+        crypto.randomUUID(), owner.id, input.day, title, shared, Number(Boolean(input.repeats))).run();
+    } else {
+      demand(typeof input?.id === 'string' && (action === 'delete' ||
+        (action === 'complete' && typeof input.done === 'boolean')), 400, 'Choose a valid task action.');
+      const task = await sql(env, 'SELECT * FROM planner_tasks WHERE id = ? AND member = ? AND shared = ?',
+        input.id, owner.id, shared).first();
+      demand(task, 404, 'This task was not found.');
+      if (action === 'delete') {
+        await sql(env, 'DELETE FROM planner_tasks WHERE id = ? AND member = ? AND shared = ?',
+          task.id, owner.id, shared).run();
+      } else if (!task.repeats) {
+        await sql(env, 'UPDATE planner_tasks SET done = ? WHERE id = ? AND member = ? AND shared = ?',
+          Number(input.done), task.id, owner.id, shared).run();
+      } else {
+        demand(validPlannerDay(input.day) && input.day.startsWith(month + '-') && occursOn(task, input.day),
+          400, 'Choose a scheduled occurrence.');
+        if (input.done) await sql(env, 'INSERT OR IGNORE INTO planner_completions VALUES (?, ?)', task.id, input.day).run();
+        else await sql(env, 'DELETE FROM planner_completions WHERE task = ? AND day = ?', task.id, input.day).run();
+      }
+    }
+  }
+  const first = plannerDate(month + '-01');
+  const earliest = new Date(first);
+  earliest.setUTCDate(first.getUTCDate() - 6);
+  const [stored, completions, plans, incoming, guests, recapPlan, recapProgress] = await Promise.all([
+    rows(sql(env, `SELECT id, day, title, done, repeats FROM planner_tasks
+      WHERE member = ? AND shared = ? AND (day LIKE ? OR (repeats = 1 AND day <= ?)) ORDER BY day, title, id`,
+      owner.id, shared, month + '-%', month + '-31')),
+    rows(sql(env, `SELECT task, planner_completions.day FROM planner_completions JOIN planner_tasks ON task = id
+      WHERE member = ? AND shared = ? AND planner_completions.day LIKE ?`, owner.id, shared, month + '-%')),
+    weekly && active ? rows(sql(env, 'SELECT schedule FROM plans WHERE member = ? AND week BETWEEN ? AND ?',
+      owner.id, dateKey(earliest), month + '-31')) : [],
+    rows(sql(env, `SELECT owner AS id, members.email FROM planner_shares JOIN members ON owner = members.id
+      WHERE planner_shares.email = ? AND billing_status IN ('active', 'trialing') AND tier = 'all' ORDER BY members.email`, email)),
+    sharedOwner === 'mine' ? rows(sql(env, 'SELECT email, permission FROM planner_shares WHERE owner = ? ORDER BY email', owner.id)) : [],
+    weekly && plus ? sql(env, 'SELECT schedule FROM plans WHERE member = ? AND week = ?', owner.id, clock.week).first() : null,
+    weekly && plus ? rows(sql(env, 'SELECT activity FROM progress WHERE member = ? AND week = ?', owner.id, clock.week)) : []
+  ]);
+  const done = new Set(completions.map(item => item.task + '/' + item.day));
+  const tasks = stored.flatMap(task => {
+    if (!task.repeats) return [task];
+    const items = [];
+    for (const date = new Date(first); date.getUTCMonth() === first.getUTCMonth(); date.setUTCDate(date.getUTCDate() + 1)) {
+      const day = dateKey(date);
+      if (occursOn(task, day)) items.push({ ...task, day, done: done.has(task.id + '/' + day) });
+    }
+    return items;
+  });
+  const activities = plans.flatMap(plan => JSON.parse(plan.schedule)).filter(activity => activity.date.startsWith(month + '-'));
+  const recap = recapPlan && { week: clock.week, total: JSON.parse(recapPlan.schedule).length, completed: recapProgress.length };
+  return json({ tasks, activities, canEdit, canRepeat: plus, canShare: all && owner.id === member.id, incoming, guests, recap });
+}
+
 async function handle(request, env) {
   const url = new URL(request.url);
   const endpoint = url.pathname;
@@ -417,7 +523,7 @@ async function handle(request, env) {
   const routes = new Set([
     'GET /api/dashboard', 'POST /api/checkout', 'POST /api/billing',
     'POST /api/preferences', 'POST /api/progress', 'POST /api/reminders', 'POST /api/notifications/read',
-    'GET /api/rewards', 'POST /api/rewards/profile'
+    'GET /api/rewards', 'POST /api/rewards/profile', 'GET /api/planner', 'POST /api/planner'
   ]);
   demand(routes.has(route), 404, 'This endpoint was not found.');
   const member = await getMember(request, env);
@@ -435,6 +541,7 @@ async function handle(request, env) {
     return json({ url: portal.url });
   }
 
+  if (route.endsWith(' /api/planner')) return planner(request, env, member, url, clock);
   const eligible = await requireAccess(env, member);
   if (route === 'GET /api/rewards') return rewards(env, eligible, clock.week);
   const input = await readJson(request);

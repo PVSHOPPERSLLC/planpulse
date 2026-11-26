@@ -55,7 +55,10 @@ async function action(button, operation) {
 function accountView(data) {
   $('sign-in').hidden = Boolean(data);
   $('account-actions').hidden = !data;
-  $('billing-view').hidden = !data || isEntitled(data);
+  const free = Boolean(data) && !isEntitled(data);
+  const showMemberships = free && $('show-memberships').getAttribute('aria-expanded') === 'true';
+  $('billing-view').hidden = !showMemberships;
+  $('free-workspace').hidden = !free;
   $('workspace').hidden = !data || !isEntitled(data);
   if (!data || !isEntitled(data)) $('rewards-panel').hidden = true;
   if (data) $('account-email').textContent = data.account.email;
@@ -290,7 +293,18 @@ async function load({ week = null, notificationsOnly = false } = {}) {
     }
     model = data;
     accountView(data);
-    if (!isEntitled(data)) return showOffers(data);
+    const planner = $('planner');
+    const free = !isEntitled(data);
+    const slot = $(free ? 'free-planner-slot' : 'paid-planner-slot');
+    if (planner.parentElement !== slot) slot.append(planner);
+    if (free) {
+      if (data.account.hasBilling || data.tiers[query.get('tier')]) setMembershipVisibility(true);
+      if (!planner.open) planner.open = true;
+      else updatePlanner();
+      if (!$('billing-view').hidden) showOffers(data);
+      return;
+    }
+    if (planner.open) updatePlanner();
     $('membership').textContent = data.tiers[data.account.tier].name + (data.account.status === 'trialing' ? ' · Trial active' : ' · Subscription active');
     showPreferences(data);
     if (!data.plan || $('schedule-panel').hidden) $('preferences-panel').open = !data.plan;
@@ -307,6 +321,19 @@ async function load({ week = null, notificationsOnly = false } = {}) {
     if (tier) $('login-link').href = '/api/auth/login?tier=' + encodeURIComponent(tier);
   }
 }
+
+function setMembershipVisibility(visible) {
+  const button = $('show-memberships');
+  button.setAttribute('aria-expanded', String(visible));
+  button.textContent = visible ? 'Hide memberships' : 'View memberships';
+  $('billing-view').hidden = !visible;
+}
+
+$('show-memberships').addEventListener('click', () => {
+  const visible = $('billing-view').hidden;
+  setMembershipVisibility(visible);
+  if (visible) showOffers(model);
+});
 
 $('manage-billing').addEventListener('click', event => goToBillingPortal(event.currentTarget));
 $('member-billing').addEventListener('click', event => goToBillingPortal(event.currentTarget));
@@ -426,3 +453,153 @@ setInterval(() => {
     load({ week: model.week, notificationsOnly: true }).catch(() => {});
   }
 }, 60_000);
+
+let plannerDate = easternDate.format(new Date());
+let plannerVersion = 0;
+let plannerOwner = '';
+let plannerData = null;
+const monthFormat = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+function renderPlanner() {
+  const calendars = [new Option('Personal planner', '')];
+  if (plannerData?.canShare || plannerOwner === 'mine') calendars.push(new Option('My shared planner', 'mine'));
+  for (const guest of plannerData?.incoming ?? []) calendars.push(new Option('Shared by ' + guest.email, guest.id));
+  if (plannerOwner && !calendars.some(option => option.value === plannerOwner)) {
+    calendars.push(new Option('Shared planner', plannerOwner));
+  }
+  $('planner-owner').replaceChildren(...calendars);
+  $('planner-owner').value = plannerOwner;
+  $('planner-picker').hidden = calendars.length < 2;
+  $('planner-recap').hidden = !plannerData?.recap;
+  if (plannerData?.recap) {
+    const { week, completed, total } = plannerData.recap;
+    $('planner-recap').textContent = 'Week of ' + formatDate(week) + ' · ' + completed + ' of ' + total + ' plan activities complete';
+  }
+  $('planner-form').hidden = plannerData?.canEdit !== true;
+  $('planner-repeat-label').hidden = !plannerData?.canRepeat;
+  $('planner-share').hidden = plannerOwner !== 'mine' || !plannerData?.canShare;
+  $('planner-guests').replaceChildren(...(plannerData?.guests ?? []).map(guest => {
+    const item = el('li', guest.email + (guest.permission === 'edit' ? ' · Can edit' : ' · Can view'));
+    const revoke = el('button', 'Revoke', 'quiet');
+    revoke.type = 'button';
+    revoke.addEventListener('click', () => updatePlanner({ action: 'revoke', email: guest.email }));
+    item.append(revoke);
+    return item;
+  }));
+  const month = plannerDate.slice(0, 7);
+  const first = dateAt(month + '-01');
+  $('planner-month').textContent = monthFormat.format(first);
+  $('planner-day').textContent = weekdayFormat.format(dateAt(plannerDate));
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => el('span', day));
+  const blanks = Array.from({ length: (first.getUTCDay() + 6) % 7 }, () => el('span'));
+  const end = new Date(first);
+  end.setUTCMonth(end.getUTCMonth() + 1, 0);
+  const tasks = plannerData?.tasks ?? [];
+  const activities = plannerData?.activities ?? [];
+  const occupied = new Set([...tasks.map(task => task.day), ...activities.map(activity => activity.date)]);
+  const days = Array.from({ length: end.getUTCDate() }, (_, index) => {
+    const key = month + '-' + String(index + 1).padStart(2, '0');
+    const button = el('button', String(index + 1));
+    button.type = 'button';
+    button.setAttribute('aria-pressed', String(key === plannerDate));
+    button.setAttribute('aria-label', weekdayFormat.format(dateAt(key)) + (occupied.has(key) ? ', has activities' : ''));
+    button.classList.toggle('has-items', occupied.has(key));
+    button.addEventListener('click', () => {
+      plannerDate = key;
+      renderPlanner();
+      $('planner-days').querySelector('[aria-pressed="true"]').focus();
+    });
+    return button;
+  });
+  $('planner-days').replaceChildren(...labels, ...blanks, ...days);
+  const items = activities.filter(activity => activity.date === plannerDate)
+    .map(activity => el('li', activity.title + ' · Weekly plan'));
+  for (const task of tasks.filter(task => task.day === plannerDate)) {
+    const item = el('li');
+    const label = el('label');
+    const check = el('input');
+    check.type = 'checkbox';
+    check.checked = Boolean(task.done);
+    check.disabled = !plannerData?.canEdit;
+    check.addEventListener('change', () => updatePlanner({ action: 'complete', id: task.id, day: task.day, done: check.checked }));
+    label.append(check, document.createTextNode(' ' + task.title + (task.repeats ? ' · Weekly' : '')));
+    const remove = el('button', 'Remove', 'quiet');
+    remove.type = 'button';
+    remove.setAttribute('aria-label', 'Remove ' + task.title);
+    remove.addEventListener('click', () => updatePlanner({ action: 'delete', id: task.id }));
+    item.append(label);
+    if (plannerData?.canEdit) {
+      if (task.repeats) remove.textContent = 'Remove series';
+      item.append(remove);
+    }
+    items.push(item);
+  }
+  $('planner-items').replaceChildren(...items);
+  $('planner-add').disabled = !plannerData;
+}
+
+async function updatePlanner(payload) {
+  const version = ++plannerVersion;
+  const params = new URLSearchParams({ month: plannerDate.slice(0, 7) });
+  if (plannerOwner) params.set('owner', plannerOwner);
+  else if (isEntitled(model)) params.set('weekly', '1');
+  const endpoint = 'planner?' + params;
+  $('planner-form').inert = true;
+  $('planner-share').inert = true;
+  $('planner-items').inert = true;
+  $('planner-status').textContent = payload ? 'Saving…' : 'Loading…';
+  try {
+    const result = await api(endpoint, payload);
+    if (version !== plannerVersion) return false;
+    plannerData = result;
+    $('planner-status').textContent = '';
+    renderPlanner();
+    return true;
+  } catch (error) {
+    if (version === plannerVersion) {
+      $('planner-status').textContent = error.message;
+      renderPlanner();
+    }
+    return false;
+  } finally {
+    if (version === plannerVersion) {
+      $('planner-form').inert = false;
+      $('planner-share').inert = false;
+      $('planner-items').inert = false;
+    }
+  }
+}
+
+$('planner').addEventListener('toggle', () => {
+  if ($('planner').open && model) {
+    renderPlanner();
+    updatePlanner();
+  }
+});
+for (const [id, offset] of [['planner-prev', -1], ['planner-next', 1]]) {
+  $(id).addEventListener('click', () => {
+    const first = dateAt(plannerDate.slice(0, 7) + '-01');
+    first.setUTCMonth(first.getUTCMonth() + offset);
+    plannerDate = first.toISOString().slice(0, 10);
+    plannerData = null;
+    renderPlanner();
+    updatePlanner();
+  });
+}
+$('planner-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const field = $('planner-title');
+  if (await updatePlanner({ action: 'add', day: plannerDate, title: field.value, repeats: !$('planner-repeat-label').hidden && $('planner-repeat').checked })) field.value = '';
+});
+
+$('planner-owner').addEventListener('change', event => {
+  plannerOwner = event.target.value;
+  plannerData = null;
+  renderPlanner();
+  updatePlanner();
+});
+$('planner-share').addEventListener('submit', async event => {
+  event.preventDefault();
+  const field = $('planner-guest');
+  if (await updatePlanner({ action: 'share', email: field.value, permission: $('planner-permission').value })) field.value = '';
+});

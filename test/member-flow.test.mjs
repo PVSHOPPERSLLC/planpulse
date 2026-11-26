@@ -14,6 +14,8 @@ function database() {
   db.exec('PRAGMA foreign_keys = ON');
   db.exec(readFileSync(new URL('../migrations/0001_members.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0002_leaderboard.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0003_planner.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0004_planner_features.sql', import.meta.url), 'utf8'));
   return {
     prepare(query) {
       const statement = db.prepare(query);
@@ -51,6 +53,7 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
     STRIPE_PRICE_STARTER: 'price_starter', STRIPE_PRICE_PLUS: 'price_plus', STRIPE_PRICE_ALL: 'price_all'
   };
   let stripeStatus = null;
+  let stripePrice = 'price_plus';
   let checkouts = 0;
   let user = 'first';
   let existingCheckout;
@@ -74,7 +77,7 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
     if (url.pathname === '/v1/subscriptions') {
       assert.equal(url.searchParams.get('customer'), 'cus_A');
       return Response.json({ data: stripeStatus ? [
-        { id: 'sub_A', status: stripeStatus, items: { data: [{ price: { id: 'price_plus' } }] } }
+        { id: 'sub_A', status: stripeStatus, items: { data: [{ price: { id: stripePrice } }] } }
       ] : [], has_more: false });
     }
     if (url.pathname === '/v1/prices/price_plus') {
@@ -146,6 +149,14 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   const session = await signIn();
   let dashboard = await data('dashboard', { session });
   assert.equal(dashboard.account.status, 'none');
+  const freePlanner = 'planner?month=2026-11';
+  await data(freePlanner, {}, 401);
+  const freeResult = await data(freePlanner, { session, body: {
+    action: 'add', day: '2026-11-25', title: 'Free planner task'
+  } });
+  assert.deepEqual(freeResult.activities, []);
+  assert.equal((await data(freePlanner, { session })).tasks[0].title, 'Free planner task');
+  await data(freePlanner, { session, body: { action: 'delete', id: freeResult.tasks[0].id } });
   const preferences = {
     tracks: [
       { key: 'meal', goal: 'Quick dinners', preference: 'Vegetarian' },
@@ -172,6 +183,17 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   dashboard = await data('dashboard', { session });
   assert.equal(dashboard.plan.length, 4);
   assert.deepEqual(dashboard.plan.map(activity => activity.date), ['2026-11-25', '2026-11-25', '2026-11-29', '2026-11-29']);
+  const planner = 'planner?month=2026-11&weekly=1';
+  assert.equal((await data(planner, { session })).activities.length, 4);
+  await data(planner, { session, body: { action: 'add', day: '2026-11-31', title: 'Invalid day' } }, 400);
+  const { tasks: [task] } = await data(planner, { session, body: {
+    action: 'add', day: '2026-11-25', title: 'Prep lunches'
+  } });
+  assert.equal(task.title, 'Prep lunches');
+  await data(planner, { session, body: { action: 'complete', id: task.id, done: true } });
+  assert.equal((await data(planner, { session })).tasks[0].done, 1);
+  await data(planner, { session, body: { action: 'delete', id: task.id } });
+  assert.deepEqual((await data(planner, { session })).tasks, []);
   const activity = dashboard.plan[0].id;
   const completion = { week: dashboard.week, activity, done: true };
   await data('progress', { session, body: completion });
@@ -215,6 +237,38 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   const otherDashboard = await data('dashboard?week=2026-11-23', { session: other });
   assert.equal(otherDashboard.plan, undefined);
   assert.doesNotMatch(JSON.stringify(otherDashboard), /first@example.com/);
+
+  const november = 'planner?month=2026-11';
+  const december = 'planner?month=2026-12';
+  const repeat = { action: 'add', day: '2026-11-25', title: 'Weekly prep', repeats: true };
+  await data(november, { session: other, body: repeat }, 403);
+  await data(november, { session, body: repeat });
+  const { tasks: [occurrence] } = await data(december, { session });
+  assert.equal(occurrence.day, '2026-12-02');
+  await data(december, { session, body: { action: 'complete', id: occurrence.id, day: occurrence.day, done: true } });
+  const repeated = (await data(december, { session })).tasks;
+  assert.equal(repeated[0].done, true);
+  assert.equal(repeated[1].done, false);
+  assert.deepEqual((await data(december + '&weekly=1', { session })).recap, {
+    week: '2026-11-30', completed: 0, total: 4
+  });
+
+  stripePrice = 'price_all';
+  assert.equal((await webhook('customer.subscription.updated')).status, 200);
+  const ownerCalendar = november + '&owner=mine';
+  const share = { action: 'share', email: 'other@example.com', permission: 'view' };
+  await data(ownerCalendar, { session, body: share });
+  const { incoming: [invitation], tasks: personal } = await data(november, { session: other });
+  assert.deepEqual(personal, []);
+  const sharedCalendar = november + '&owner=' + invitation.id;
+  const sharedTask = { action: 'add', day: '2026-11-26', title: 'Shared plans' };
+  await data(sharedCalendar, { session: other, body: sharedTask }, 403);
+  await data(ownerCalendar, { session, body: { ...share, permission: 'edit' } });
+  await data(sharedCalendar, { session: other, body: sharedTask });
+  assert.equal((await data(ownerCalendar, { session })).tasks[0].title, sharedTask.title);
+  assert.equal((await data(november, { session })).tasks.some(task => task.title === sharedTask.title), false);
+  await data(ownerCalendar, { session, body: { action: 'revoke', email: share.email } });
+  await data(sharedCalendar, { session: other }, 403);
 
   stripeStatus = 'canceled';
   assert.equal((await webhook('customer.subscription.deleted')).status, 200);

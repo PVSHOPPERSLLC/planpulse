@@ -26,13 +26,49 @@
 
     <section class="panel login-panel" id="sign-in" hidden>
       <h1>Welcome to PlanPulse</h1>
-      <p>Sign in to subscribe, set your preferences, and open your weekly schedule.</p>
+      <p>Sign in to use your free calendar and personal planner.</p>
       <a class="button primary" id="login-link" href="/api/auth/login">Continue with Google</a>
       <p class="fine-print">Already subscribed through an earlier checkout? Contact us to link your existing subscription. <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a></p>
     </section>
+    <section id="free-workspace" hidden>
+      <div class="heading">
+        <h1>Your free planner</h1>
+        <button type="button" class="button secondary" id="show-memberships" aria-controls="billing-view" aria-expanded="false">View memberships</button>
+      </div>
+      <div id="free-planner-slot">
+          <details class="panel" id="planner">
+            <summary>Calendar &amp; planner</summary>
+            <label id="planner-picker" hidden>Calendar <select id="planner-owner"></select></label>
+            <p id="planner-recap" hidden></p>
+            <div class="section-title planner-navigation">
+              <button type="button" class="button secondary" id="planner-prev" aria-label="Previous month">←</button>
+              <h2 id="planner-month" aria-live="polite"></h2>
+              <button type="button" class="button secondary" id="planner-next" aria-label="Next month">→</button>
+            </div>
+            <div id="planner-days" class="planner-grid" role="group" aria-label="Calendar days"></div>
+            <p id="planner-status" role="status"></p>
+            <h3 id="planner-day"></h3>
+            <ul id="planner-items"></ul>
+            <form id="planner-form">
+              <label for="planner-title">Personal task</label>
+              <input id="planner-title" required maxlength="120" placeholder="e.g. Prep lunches">
+              <label id="planner-repeat-label" hidden><input type="checkbox" id="planner-repeat"> Repeat weekly</label>
+              <button class="button primary" id="planner-add">Add task</button>
+            </form>
+            <form id="planner-share" hidden>
+              <h3>Share this calendar</h3>
+              <label>Google sign-in email <input id="planner-guest" type="email" required maxlength="254"></label>
+              <label>Permission <select id="planner-permission"><option value="view">Can view</option><option value="edit">Can edit tasks</option></select></label>
+              <button class="button secondary">Grant access</button>
+              <p class="fine-print">After granting access, send them the member page link. This calendar will appear when they sign in.</p>
+              <ul id="planner-guests"></ul>
+            </form>
+          </details>
+      </div>
+    </section>
     <section id="billing-view" hidden>
       <div class="heading">
-        <div><h1>Choose your subscription</h1><p>Weekly plans with monthly billing.</p></div>
+        <div><h2>Choose your subscription</h2><p>Weekly plans with monthly billing.</p></div>
         <button type="button" class="button secondary" id="manage-billing" hidden>Manage billing</button>
       </div>
       <div id="tiers" class="tiers"></div>
@@ -58,6 +94,7 @@
             <div class="week-days" id="week-days" role="group" aria-label="Filter schedule by day"></div>
             <div id="schedule"></div>
           </section>
+          <div id="paid-planner-slot"></div>
           <details class="panel" id="preferences-panel" open>
             <summary id="preferences-title">Set up your first plan</summary>
             <p id="preferences-detail"></p>
