@@ -176,6 +176,9 @@
     .faq-list summary::after { content: "+"; font-size: 1.2rem; color: var(--accent-dark); }
     .faq-list details[open] summary::after { content: "−"; }
     .faq-list p { padding: 0 18px 17px 0; color: var(--muted); line-height: 1.65; }
+    .sponsor-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; background: var(--soft); }
+    .sponsor-panel p { color: var(--muted); line-height: 1.6; max-width: 60ch; margin-top: 8px; }
+    .sponsor-panel h2 { font-size: clamp(1.7rem, 4vw, 2.7rem); }
     .site-footer { padding-block: 29px; }
     .footer-top, .footer-links { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
     .footer-links { justify-content: flex-start; gap: 4px 14px; }
@@ -370,6 +373,17 @@
         </div>
       </div>
     </section>
+    <section id="sponsor" class="section" aria-labelledby="sponsor-title">
+      <div class="wrap">
+        <div class="panel sponsor-panel">
+          <div>
+            <h2 id="sponsor-title">Sponsor PlanPulse</h2>
+            <p>Reach visitors exploring weekly meal, fitness, and study plans. Ask about a clearly labeled 30-day placement on the public site.</p>
+          </div>
+          <a class="button secondary" href="mailto:App@pvshoppersllc.com?subject=PlanPulse%20sponsorship%20inquiry&amp;body=Brand%20name%3A%0AWebsite%3A%0AWhat%20you%20would%20like%20to%20promote%3A%0APreferred%20start%20date%3A">Email us about sponsoring</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -377,6 +391,7 @@
       <div class="footer-top">
         <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
         <div class="footer-links">
+          <a href="#sponsor" style="font-size:.79rem;font-weight:650">Sponsor PlanPulse</a>
           <button type="button" data-legal-open="terms">Terms of Service</button>
           <button type="button" data-legal-open="privacy">Privacy Policy</button>
           <button type="button" data-legal-open="health">Health &amp; Fitness Disclaimer</button>
