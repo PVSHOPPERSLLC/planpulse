@@ -1,0 +1,23 @@
+{
+  "name": "planpulse-members",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "getplanpulseonline.online/api/*", "zone_name": "getplanpulseonline.online" }],
+  "vars": {
+    "APP_ORIGIN": "https://getplanpulseonline.online",
+    "STRIPE_LIVE_MODE": "false",
+    "GOOGLE_CLIENT_ID": "REPLACE_WITH_GOOGLE_WEB_CLIENT_ID",
+    "STRIPE_PRICE_STARTER": "REPLACE_WITH_MONTHLY_PRICE_ID",
+    "STRIPE_PRICE_PLUS": "REPLACE_WITH_MONTHLY_PRICE_ID",
+    "STRIPE_PRICE_ALL": "REPLACE_WITH_MONTHLY_PRICE_ID"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "planpulse-members",
+    "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }],
+  "triggers": { "crons": ["*/5 * * * *"] }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "planpulse-staging",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": ".staging-assets",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    "APP_ORIGIN": "https://planpulse-staging.REPLACE_WITH_WORKERS_SUBDOMAIN.workers.dev",
+    "STRIPE_LIVE_MODE": "false",
+    "GOOGLE_CLIENT_ID": "REPLACE_WITH_GOOGLE_WEB_CLIENT_ID",
+    "STRIPE_PRICE_STARTER": "REPLACE_WITH_MONTHLY_TEST_PRICE_ID",
+    "STRIPE_PRICE_PLUS": "REPLACE_WITH_MONTHLY_TEST_PRICE_ID",
+    "STRIPE_PRICE_ALL": "REPLACE_WITH_MONTHLY_TEST_PRICE_ID"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "planpulse-staging",
+    "database_id": "REPLACE_WITH_STAGING_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }],
+  "triggers": { "crons": ["*/5 * * * *"] }
+}

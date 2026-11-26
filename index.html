@@ -167,6 +167,9 @@
     .price-card li { display: grid; grid-template-columns: 14px 1fr; gap: 6px; }
     .price-card li::before { content: "✓"; color: var(--accent-dark); font-weight: 740; }
     .price-card.featured li::before { color: #cfbcff; }
+    .price-card .button { margin-top: auto; width: 100%; }
+    .price-card.featured .button { background: #dbccff; color: #2b174b; }
+    .price-card.featured .button:hover { background: #eee6ff; }
     .faq-section { background: white; border-block: 1px solid var(--line); }
     .faq-layout { display: grid; grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); gap: 30px; align-items: start; }
     .faq-list { border-top: 1px solid var(--line); }
@@ -233,7 +236,7 @@
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
       </nav>
-      <a class="button secondary nav-action" href="#customizer">Try the dashboard <span class="arrow" aria-hidden="true">↗</span></a>
+      <a class="button secondary nav-action" href="/member/">Member sign-in <span class="arrow" aria-hidden="true">↗</span></a>
     </div>
   </header>
 
@@ -242,14 +245,14 @@
       <div class="wrap">
         <div class="hero-grid">
           <div class="hero-copy">
-            <p class="delivery">Member access is being set up</p>
+            <p class="delivery">New plans Sundays at 7 AM ET</p>
             <h1 id="hero-title">A better week <span>starts on Sunday.</span></h1>
             <p>Your meal, fitness, and study plans in one dashboard. See what’s scheduled each day and check it off as you go.</p>
             <div class="hero-actions">
-              <a class="button primary" href="#pricing">See pricing <span class="arrow" aria-hidden="true">→</span></a>
+              <a class="button primary" href="#pricing">Choose your plan <span class="arrow" aria-hidden="true">→</span></a>
               <a class="button secondary" href="#customizer">Explore the dashboard</a>
             </div>
-            <p class="hero-price">Already subscribed? <a href="mailto:App@pvshoppersllc.com">Contact support</a>.</p>
+            <p class="hero-price">From $9/month · Cancel anytime</p>
           </div>
 
           <div class="product-stage">
@@ -327,6 +330,7 @@
               <div class="range-heading"><label for="daysRange">Days per week</label><output id="daysValue" for="daysRange">5 days</output></div>
               <input id="daysRange" type="range" min="3" max="7" value="5">
             </div>
+            <button class="button primary" id="subscribeFromPreviewBtn" type="button">Choose Plus <span class="arrow" aria-hidden="true">→</span></button>
           </div>
         </div>
       </div>
@@ -334,13 +338,16 @@
 
     <section id="pricing" class="section">
       <div class="wrap">
-        <div class="section-heading"><h2>Choose your weekly plan</h2><p>Planned monthly pricing. New subscriptions will open once member access is ready.</p></div>
+        <div class="section-heading"><h2>Choose your weekly plan</h2><p>Plans are billed monthly. Eligible new subscribers can try Plus or All-Access free for 7 days.</p></div>
         <div class="price-grid" id="pricingGrid">
           <article class="panel price-card">
             <h3>Starter</h3>
             <p>Great for focusing on one core habit each week.</p>
             <div class="price"><strong>$9</strong><span class="price-period">/ month</span></div>
             <ul><li>1 personalized plan/week (Meal, Fitness, or Study)</li><li>New plan in your dashboard every Sunday</li><li>Basic dietary or equipment filters</li></ul>
+            <button type="button" class="button secondary" data-tier="starter" hidden>
+              Choose Starter <span class="arrow" aria-hidden="true">→</span>
+            </button>
           </article>
           <article class="panel price-card featured">
             <h3>Plus</h3>
@@ -348,6 +355,9 @@
             <div class="price"><strong>$15</strong><span class="price-period">/ month</span></div>
             <p class="trial">7-day free trial</p>
             <ul><li>2 personalized plans/week (any combination)</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <button type="button" class="button primary" data-tier="plus" hidden>
+              Try Plus free <span class="arrow" aria-hidden="true">→</span>
+            </button>
           </article>
           <article class="panel price-card">
             <h3>All-Access</h3>
@@ -355,6 +365,9 @@
             <div class="price"><strong>$19</strong><span class="price-period">/ month</span></div>
             <p class="trial">7-day free trial</p>
             <ul><li>All 3 tracks (Meal + Fitness + Study) every week</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <button type="button" class="button secondary" data-tier="all" hidden>
+              Try All-Access free <span class="arrow" aria-hidden="true">→</span>
+            </button>
           </article>
         </div>
       </div>
@@ -616,6 +629,10 @@
       updateProgress();
     }
 
+    function openCheckout(tierId) {
+      location.assign('/member/?tier=' + encodeURIComponent(tierId));
+    }
+
     function showPolicy(key) {
       document.getElementById('legalContent').innerHTML = LEGAL_DOCS[key];
       for (const button of document.querySelectorAll('[data-legal-tab]')) {
@@ -623,6 +640,7 @@
       }
     }
 
+    const pricingGrid = document.getElementById('pricingGrid');
     for (const button of document.querySelectorAll('[data-track]')) {
       button.addEventListener('click', () => {
         setTrack(button.dataset.track);
@@ -634,6 +652,10 @@
         setTrack(link.dataset.previewTrack);
         saveDemo();
       });
+    }
+    for (const button of pricingGrid.querySelectorAll('[data-tier]')) {
+      button.addEventListener('click', () => openCheckout(button.dataset.tier));
+      button.hidden = false;
     }
     for (const button of document.querySelectorAll('[data-legal-open]')) {
       button.addEventListener('click', () => {
@@ -673,6 +695,7 @@
       updateProgress();
       saveDemo();
     });
+    document.getElementById('subscribeFromPreviewBtn').addEventListener('click', () => openCheckout('plus'));
     document.getElementById('openNotifications').addEventListener('click', () => {
       renderReminderSettings();
       notificationModal.showModal();

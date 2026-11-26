@@ -1,0 +1,10 @@
+exclude:
+  - migrations
+  - test
+  - worker
+  - wrangler.example.jsonc
+  - wrangler.jsonc
+  - README.md
+  - wrangler.staging.example.jsonc
+  - wrangler.staging.jsonc
+  - .staging-assets
