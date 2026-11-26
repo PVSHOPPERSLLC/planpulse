@@ -1,0 +1,41 @@
+{
+  "name": "planpulse-members",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "getplanpulseonline.online/api/*",
+      "zone_name": "getplanpulseonline.online"
+    },
+    {
+      "pattern": "getplanpulseonline.online/member/*",
+      "zone_name": "getplanpulseonline.online"
+    }
+  ],
+  "vars": {
+    "APP_ORIGIN": "https://getplanpulseonline.online",
+    "STRIPE_LIVE_MODE": "false"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "planpulse-members",
+      "database_id": "fd33cefe-6cbc-4190-b856-30754e9e2208",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
+  "keep_vars": true,
+  "assets": {
+    "directory": ".staging-assets",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  }
+}
