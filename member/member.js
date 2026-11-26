@@ -82,7 +82,7 @@ function showOffers(data) {
     const units = el('p', tier.tracks === 1 ? '1 plan type per week' : tier.tracks + ' plan types per week');
     const button = el('button', 'Choose ' + tier.name, 'button ' + (selected ? 'primary' : 'secondary'));
     button.type = 'button';
-    button.disabled = blocked;
+    button.disabled = blocked || data.billingUnavailable;
     button.addEventListener('click', () => action(button, async () => {
       const result = await api('checkout', { tier: id });
       location.assign(result.url);
@@ -92,7 +92,8 @@ function showOffers(data) {
     card.append(button);
     return card;
   }));
-  if (blocked) status('Open Manage billing to resolve your current subscription before starting another.');
+  if (data.billingUnavailable) status('Billing is temporarily unavailable. You can still use your personal planner.', true);
+  else if (blocked) status('Open Manage billing to resolve your current subscription before starting another.');
 }
 
 function makeSelect(values, value) {

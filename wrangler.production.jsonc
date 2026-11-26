@@ -16,7 +16,7 @@
   ],
   "vars": {
     "APP_ORIGIN": "https://getplanpulseonline.online",
-    "STRIPE_LIVE_MODE": "false"
+    "STRIPE_LIVE_MODE": "true"
   },
   "d1_databases": [
     {

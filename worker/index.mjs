@@ -325,9 +325,18 @@ async function dashboard(env, account, clock, selectedWeek, checkoutSession) {
     const session = await sql(env, 'SELECT stripe_session FROM checkout_attempts WHERE member = ?', account.id).first();
     confirmCheckout = session?.stripe_session === checkoutSession;
   }
-  const member = await getBilling(env, account, confirmCheckout);
+  let member;
+  let billingUnavailable = false;
+  try {
+    member = await getBilling(env, account, confirmCheckout);
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.status < 500) throw error;
+    member = { ...account, billing_status: 'none', tier: null };
+    billingUnavailable = true;
+  }
   const access = ACTIVE.has(member.billing_status);
   const output = {
+    billingUnavailable,
     account: { email: member.email, tier: member.tier, status: member.billing_status, hasBilling: Boolean(member.stripe_customer) },
     currentWeek: clock.week, nextPreferencesWeek: clock.nextPreferencesWeek,
     tracks: TRACK_OPTIONS, tiers: Object.fromEntries(Object.entries(TIERS).map(([id, tier]) => [id, {
