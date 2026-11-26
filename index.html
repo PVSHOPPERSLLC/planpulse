@@ -242,19 +242,20 @@
         to { opacity: 1; transform: translateY(0); }
       }
     }
+    .footer-links a { font-size: .8rem; font-weight: 650; }
+    .price-card > .button { margin-top: auto; }
+    @media (max-width: 740px) {
+      .nav-bar { flex-wrap: wrap; padding-block: 10px; }
+      .nav-links { display: flex; order: 3; width: 100%; flex-wrap: wrap; gap: 9px 17px; }
+    }
   </style>
 </head>
 <body id="top">
   <header class="site-header">
     <div class="wrap nav-bar">
       <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
-      <nav class="nav-links" aria-label="Main navigation">
-        <a href="#how-it-works">How it works</a>
-        <a href="#customizer">Dashboard demo</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#faq">FAQ</a>
-      </nav>
-      <a class="button secondary nav-action" href="#customizer">Try the dashboard <span class="arrow" aria-hidden="true">↗</span></a>
+      <nav class="nav-links" aria-label="Main navigation"><a href="/memberships/">Memberships</a><a href="/rewards/">Rewards</a><a href="/stories/">Stories</a></nav>
+      <a class="button secondary nav-action" href="/member/">Member sign-in <span class="arrow" aria-hidden="true">↗</span></a>
     </div>
   </header>
 
@@ -267,7 +268,7 @@
             <h1 id="hero-title">Plan the week <span>you actually have.</span></h1>
             <p>Make room for the meals, workouts, and study sessions that fit your week. See what’s scheduled, then check it off as you go.</p>
             <div class="hero-actions">
-              <a class="button primary" href="#pricing">See pricing <span class="arrow" aria-hidden="true">→</span></a>
+              <a class="button primary" href="/memberships/">See memberships <span class="arrow" aria-hidden="true">→</span></a>
               <a class="button secondary" href="#customizer">Explore the dashboard</a>
             </div>
             <p class="hero-price">Already subscribed? <a href="mailto:App@pvshoppersllc.com">Contact support</a>.</p>
@@ -335,6 +336,7 @@
               <div class="preview-progress"><span id="progressText" aria-live="polite"></span><progress id="progressBar" aria-label="Days completed" value="0" max="5"></progress></div>
             </div>
             <div id="previewSchedule" class="schedule"></div>
+            <p class="preview-hint"><strong id="demoReward"></strong> · <a href="/rewards/">How rewards work</a></p>
             <p class="preview-hint">Sample activities are fixed. A subscription plan would be personalized to your preferences.</p>
           </div>
           <div class="panel controls">
@@ -366,21 +368,21 @@
             <h3>Starter</h3>
             <p>Great for focusing on one core habit each week.</p>
             <div class="price"><strong>$9</strong><span class="price-period">/ month</span></div>
-            <ul><li>1 personalized plan/week (Meal, Fitness, or Study)</li><li>New plan in your dashboard every Sunday</li><li>Basic dietary or equipment filters</li></ul>
+            <ul><li>1 personalized plan/week (Meal, Fitness, or Study)</li><li>New plan in your dashboard every Sunday</li><li>Basic dietary or equipment filters</li></ul><a class="button secondary" href="/memberships/#starter">Explore Starter</a>
           </article>
           <article class="panel price-card featured">
             <h3>Plus</h3>
             <p>Choose any two plan types each week.</p>
             <div class="price"><strong>$15</strong><span class="price-period">/ month</span></div>
             <p class="trial">7-day free trial</p>
-            <ul><li>2 personalized plans/week (any combination)</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <ul><li>2 personalized plans/week (any combination)</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul><a class="button secondary" href="/memberships/#plus">Explore Plus</a>
           </article>
           <article class="panel price-card">
             <h3>All-Access</h3>
             <p>Complete weekly coverage for health, fitness, and learning.</p>
             <div class="price"><strong>$19</strong><span class="price-period">/ month</span></div>
             <p class="trial">7-day free trial</p>
-            <ul><li>All 3 tracks (Meal + Fitness + Study) every week</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul>
+            <ul><li>All 3 tracks (Meal + Fitness + Study) every week</li><li>Saved activity progress and plan history</li><li>Optional dashboard reminders</li></ul><a class="button secondary" href="/memberships/#all">Explore All-Access</a>
           </article>
         </div>
       </div>
@@ -415,8 +417,8 @@
         </div>
         <div class="panel feedback-panel">
           <a class="button secondary" href="mailto:App@pvshoppersllc.com?subject=PlanPulse%20feedback">Email feedback</a>
-          <a class="button secondary" href="mailto:App@pvshoppersllc.com?subject=PlanPulse%20website%20review">Share a review</a>
-          <p>Feedback and reviews go privately to the PlanPulse team.</p>
+          <a class="button secondary" href="/stories/">Share your story</a>
+          <p>Feedback goes privately to the PlanPulse team.</p>
         </div>
       </div>
     </section>
@@ -426,8 +428,8 @@
     <div class="wrap">
       <div class="footer-top">
         <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
-        <div class="footer-links">
-          <a class="footer-anchor" href="#feedback">Feedback &amp; reviews</a>
+        <div class="footer-links"><a href="/memberships/">Memberships</a><a href="/rewards/">Rewards</a><a href="/stories/">Stories</a><a href="/member/">Member sign-in</a>
+          <a class="footer-anchor" href="#feedback">Feedback &amp; stories</a>
           <a href="#sponsor" style="font-size:.79rem;font-weight:650">Sponsor PlanPulse</a>
           <button type="button" data-legal-open="terms">Terms of Service</button>
           <button type="button" data-legal-open="privacy">Privacy Policy</button>
@@ -647,6 +649,10 @@
       const progress = document.getElementById('progressBar');
       progress.max = state.days;
       progress.value = checked;
+      const activityCount = Object.values(state.completedDays).filter(done => done === true).length;
+      const points = activityCount * 10;
+      const level = points >= 120 ? 'In Rhythm' : points >= 50 ? 'Building Momentum' : 'Getting Started';
+      document.getElementById('demoReward').textContent = level + ' · ' + points + ' sample points';
     }
 
     function renderPreview() {
