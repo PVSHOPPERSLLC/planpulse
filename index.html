@@ -249,29 +249,30 @@
       .nav-links { display: flex; order: 3; width: 100%; flex-wrap: wrap; gap: 9px 17px; }
     }
   </style>
+  <link rel="stylesheet" href="/planpulse.css?v=1">
 </head>
 <body id="top">
   <header class="site-header">
     <div class="wrap nav-bar">
       <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>PlanPulse</a>
       <nav class="nav-links" aria-label="Main navigation"><a href="/memberships/">Memberships</a><a href="/rewards/">Rewards</a><a href="/stories/">Stories</a></nav>
-      <a class="button secondary nav-action" href="/member/">Member sign-in <span class="arrow" aria-hidden="true">↗</span></a>
+      <a class="button secondary nav-action" href="/member/">Member sign-in</a>
     </div>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap">
         <div class="hero-grid">
           <div class="hero-copy">
-            <p class="delivery">Member access is being set up</p>
+            <p class="delivery">Weekly meal, fitness, and study planning</p>
             <h1 id="hero-title">Plan the week <span>you actually have.</span></h1>
-            <p>Make room for the meals, workouts, and study sessions that fit your week. See what’s scheduled, then check it off as you go.</p>
+            <p>Choose what you want to work on and when you have time. PlanPulse puts your meals, workouts, and study sessions into one weekly checklist.</p>
             <div class="hero-actions">
-              <a class="button primary" href="/memberships/">See memberships <span class="arrow" aria-hidden="true">→</span></a>
-              <a class="button secondary" href="#customizer">Explore the dashboard</a>
+              <a class="button primary" href="#customizer">Try a sample week</a>
+              <a class="button secondary" href="/memberships/">Compare memberships</a>
             </div>
-            <p class="hero-price">Already subscribed? <a href="mailto:App@pvshoppersllc.com">Contact support</a>.</p>
+            <p class="hero-price">You can try the sample without an account.</p>
           </div>
 
           <div class="product-stage">
@@ -294,15 +295,15 @@
                 <li><span>Thu</span><strong>Chickpea tuna salad</strong><span class="sample-check" aria-hidden="true"></span></li>
                 <li><span>Fri</span><strong>Garlic shrimp &amp; zucchini noodles</strong><span class="sample-check" aria-hidden="true"></span></li>
               </ul>
-              <a class="sample-delivery sample-demo-link" href="#customizer" data-preview-track="meal">Try this schedule in the dashboard <span aria-hidden="true">↓</span></a>
+              <a class="sample-delivery sample-demo-link" href="#customizer" data-preview-track="meal">Open this sample in the dashboard</a>
             </article>
           </div>
         </div>
 
         <nav class="track-overview" aria-label="Sample plan tracks">
-          <a class="track-link" href="#customizer" data-preview-track="meal"><span class="track-icon" aria-hidden="true">◫</span>Meal plans <span class="arrow" aria-hidden="true">↗</span></a>
-          <a class="track-link" href="#customizer" data-preview-track="fitness"><span class="track-icon" aria-hidden="true">↗</span>Fitness plans <span class="arrow" aria-hidden="true">↗</span></a>
-          <a class="track-link" href="#customizer" data-preview-track="study"><span class="track-icon" aria-hidden="true">▤</span>Study plans <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="track-link" href="#customizer" data-preview-track="meal"><span><strong>Meal plans</strong><small>Plan dinners around your preferences.</small></span></a>
+          <a class="track-link" href="#customizer" data-preview-track="fitness"><span><strong>Fitness plans</strong><small>Fit movement into the days you have.</small></span></a>
+          <a class="track-link" href="#customizer" data-preview-track="study"><span><strong>Study plans</strong><small>Make time for a topic you want to learn.</small></span></a>
         </nav>
       </div>
     </section>
