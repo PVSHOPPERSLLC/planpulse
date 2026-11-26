@@ -44,3 +44,18 @@
   .track-link { min-height: 0; padding: 12px 14px; justify-content: flex-start; text-align: left; }
   .track-link:not(:first-child) { border-left: 0; border-top: 1px solid var(--line); }
 }
+
+.hero {
+  background: radial-gradient(ellipse at 83% 8%, #56378d 0, transparent 52%), #211535;
+  color: #fff;
+}
+.hero-copy h1 span { color: #d6c1ff; }
+.hero-copy .delivery, .hero-copy > p:not(.delivery):not(.hero-price),
+.hero-copy .hero-price { color: #ece4ff; }
+.hero-copy .delivery::before { background: #d6c1ff; box-shadow: 0 0 0 3px #ffffff22; }
+.hero-copy .primary { background: #dfceff; color: #2d184e; }
+.hero-copy .primary:hover { background: #eee5ff; }
+.hero-copy .secondary { color: var(--ink); }
+.hero .product-stage { border: 1px solid #ffffff39; }
+.hero .sample-sheet, .hero .track-overview { color: var(--ink); }
+.hero a:focus-visible, .hero button:focus-visible { outline: 3px solid #b797ff; outline-offset: 3px; }
