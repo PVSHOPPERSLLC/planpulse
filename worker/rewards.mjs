@@ -10,6 +10,6 @@ export function sharedProfile(input) {
 }
 
 export function rewardLevel(activities) {
-  const points = activities * 10;
+  const points = (activities >= 3 ? 20 : 0) + (activities >= 5 ? 30 : 0) + (activities >= 10 ? 70 : 0);
   return { activities, points, level: points >= 120 ? 'In Rhythm' : points >= 50 ? 'Building Momentum' : 'Getting Started' };
 }

@@ -1,3 +1,4 @@
+import { rewardLevel } from '../worker/rewards.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
@@ -177,12 +178,12 @@ test('first plan, subscription lifecycle, progress, reminders and history', asyn
   await data('progress', { session, body: completion });
   await data('progress', { session, body: { ...completion, activity: 'arbitrary-activity' } }, 404);
   let rewards = await data('rewards', { session });
-  assert.equal(rewards.personal.points, 10);
+  assert.equal(rewards.personal.points, 0);
   assert.equal(rewards.profile, null);
   assert.deepEqual(rewards.leaderboard, []);
   await data('rewards/profile', { session, body: { enabled: true, firstName: 'first@example.com', state: 'NY' } }, 400);
   rewards = await data('rewards/profile', { session, body: { enabled: true, firstName: 'Alex', state: 'NY' } });
-  assert.deepEqual(rewards.leaderboard, [{ firstName: 'Alex', state: 'NY', activities: 1, points: 10 }]);
+  assert.deepEqual(rewards.leaderboard, [{ firstName: 'Alex', state: 'NY', activities: 1, points: 0 }]);
   rewards = await data('rewards/profile', { session, body: { enabled: false } });
   assert.equal(rewards.profile, null);
   assert.deepEqual(rewards.leaderboard, []);
@@ -239,4 +240,9 @@ test('Sunday release and Saturday cutoff follow Eastern civil time in summer and
     assert.equal(clock.activityWeek, activityWeek);
   }
   assert.equal(validatePreferences({ tracks: [null], days: [0] }, 'starter'), null);
+});
+
+test('weekly points accumulate only at milestone thresholds', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 9, 10, 11].map(count => rewardLevel(count).points),
+    [0, 0, 0, 20, 20, 50, 50, 120, 120]);
 });

@@ -55,15 +55,15 @@
             </div>
             <div id="schedule"></div>
           </section>
-          <section class="panel" id="preferences-panel" aria-labelledby="preferences-title">
-            <h2 id="preferences-title">Set up your first plan</h2>
+          <details class="panel" id="preferences-panel" open>
+            <summary id="preferences-title">Set up your first plan</summary>
             <p id="preferences-detail"></p>
             <form id="preferences-form">
               <fieldset><legend id="track-legend">Plan types</legend><div id="tracks"></div></fieldset>
               <fieldset><legend>Scheduled days</legend><div id="days" class="day-options"></div></fieldset>
               <button class="button primary" id="save-preferences">Create my first plan</button>
             </form>
-          </section>
+          </details>
         </div>
         <aside class="panel" id="notifications" aria-labelledby="notices-title">
           <div class="section-title"><h2 id="notices-title">Notifications</h2><button type="button" id="mark-read" class="quiet" hidden>Mark all read</button></div>
@@ -83,7 +83,11 @@
     <section class="panel" id="rewards-panel" aria-labelledby="rewards-title" hidden>
       <h2 id="rewards-title">Rewards and U.S. leaderboard</h2>
       <p id="reward-summary" aria-live="polite"></p>
-      <p>Get 10 points for each activity checked off in your current weekly plan. Points have no cash value.</p>
+      <p>Weekly milestones earn points at 3, 5, and 10 completed activities. Points have no cash value.</p>
+      <details class="reward-rules">
+        <summary>How to earn points</summary>
+        <ul><li>3 activities · +20 points</li><li>5 activities · +30 points</li><li>10 activities · +70 points</li></ul>
+      </details>
       <form id="leaderboard-form">
         <fieldset>
           <legend>Leaderboard profile</legend>

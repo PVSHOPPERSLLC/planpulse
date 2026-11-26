@@ -241,6 +241,7 @@ async function load({ week = null, notificationsOnly = false } = {}) {
     if (!isEntitled(data)) return showOffers(data);
     $('membership').textContent = data.tiers[data.account.tier].name + (data.account.status === 'trialing' ? ' · Trial active' : ' · Subscription active');
     showPreferences(data);
+    if (!data.plan || $('schedule-panel').hidden) $('preferences-panel').open = !data.plan;
     showSchedule(data);
     showNotices(data);
     showReminderSettings(data);

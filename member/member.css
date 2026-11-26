@@ -99,3 +99,9 @@ input[type="checkbox"] { width: 17px; height: 17px; flex: none; accent-color: va
 #leaderboard-form { margin-top: 14px; }
 #leaderboard-name { display: block; width: 100%; margin-top: 3px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; }
 #leaderboard-list { padding-left: 25px; line-height: 1.8; }
+
+#preferences-title { font-size: 1.25rem; font-weight: 760; }
+#preferences-panel[open] #preferences-title { margin-bottom: 10px; }
+#preferences-title, .reward-rules summary { cursor: pointer; }
+.reward-rules { margin-top: 12px; color: var(--muted); }
+.reward-rules ul { padding-inline-start: 22px; line-height: 1.65; }
