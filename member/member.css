@@ -143,3 +143,100 @@ input[type="checkbox"] { width: 17px; height: 17px; flex: none; accent-color: va
 #planner-items button { margin-inline-start: .55rem; }
 #planner-form { display: grid; gap: .5rem; justify-items: start; }
 #planner-title { width: 100%; }
+
+/* PlanPulse glass dashboard */
+:root {
+  color-scheme: dark;
+  background: #10091d;
+  color: #faf5ff;
+  --muted: #cbbfdf;
+  --line: #e4d3ff33;
+  --violet: #d5b6ff;
+  --tint: #312148;
+}
+body {
+  --glow: #9b65f8;
+  background: radial-gradient(ellipse at 14% 8%, #59358c 0, transparent 43%),
+    radial-gradient(ellipse at 94% 36%, #3a2059 0, transparent 46%), #10091d;
+  min-height: 100vh;
+}
+body[data-tier="starter"], [data-plan="starter"] { --glow: #c1a2ff; }
+body[data-tier="plus"], [data-plan="plus"] { --glow: #da95ff; }
+body[data-tier="all"], [data-plan="all"] { --glow: #ffd0a5; }
+.site-header, .panel, .glass-nav {
+  background: linear-gradient(145deg, #e7ceff20, #b385ed0c), #1a1027a8;
+  backdrop-filter: blur(22px);
+  border-color: var(--line);
+  box-shadow: inset 0 1px #fff2, 0 16px 40px #09051045;
+}
+.panel { border-radius: 24px; }
+.heading .membership, .quiet { color: var(--glow); }
+.button, .quiet, select, input:not([type="checkbox"]), .week-day, .planner-grid button {
+  background: #322446;
+  color: #f9f0ff;
+  border-color: var(--line);
+  transition: background .2s, transform .2s, box-shadow .2s;
+}
+.button.primary, .planner-grid button[aria-pressed="true"] {
+  background: linear-gradient(125deg, var(--glow), #bd90ff);
+  color: #20112c;
+  border-color: #f8e9ff70;
+}
+.brand span { color: #241236; }
+.button:hover:not(:disabled), .week-day:hover, .glass-nav button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px #bd90ff35; }
+.tier { border-top: 2px solid var(--glow); }
+.tier .price { color: var(--glow); }
+.track, .plan-preview { border: 1px solid var(--line); border-radius: 16px; background: #25173390; padding: 14px; }
+.plan-preview { margin-bottom: 16px; }
+.plan-preview p { margin-top: 5px; }
+.plan-preview ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.preview-track { display: grid; gap: 3px; border-inline-start: 3px solid var(--track, var(--glow)); padding-inline-start: 10px; }
+[data-track="meal"] { --track: #9ee3b8; }
+[data-track="fitness"] { --track: #ffa9ca; }
+[data-track="study"] { --track: #aebcff; }
+.preview-track strong { color: var(--track); }
+.preview-track span { color: var(--muted); }
+.glass-nav {
+  display: flex; position: sticky; top: 8px; z-index: 3; width: fit-content; max-width: 100%;
+  gap: 5px; padding: 6px; border: 1px solid var(--line); border-radius: 18px; margin-bottom: 24px;
+}
+.glass-nav button { display: inline-flex; gap: 7px; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding-inline: 10px; background: #a486c42a; border: 1px solid transparent; border-radius: 12px; }
+.glass-nav button[aria-current] { background: var(--glow); color: #21142e; }
+.glass-nav button b { overflow: hidden; white-space: nowrap; max-width: 7rem; transition: max-width .25s, opacity .2s; }
+.glass-nav.collapsed button b { max-width: 0; opacity: 0; }
+#schedule-panel, #planner, #preferences-panel, #rewards-panel { scroll-margin-top: 78px; }
+#status:not(:empty) { color: #f1ddff; }
+#status[data-error="true"] { background: #512936; color: #ffd4df; }
+.panel { animation: glass-enter .4s ease-out both; }
+@keyframes glass-enter { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 980px) {
+  main:has(.glass-nav:not([hidden])) { position: relative; padding-inline-start: 164px; }
+  .glass-nav { float: left; margin-inline-start: -164px; display: grid; width: 148px; transition: width .25s; }
+  .glass-nav.collapsed { width: 60px; }
+  .glass-nav button { justify-content: flex-start; }
+}
+@media (max-width: 560px) {
+  .glass-nav button { padding-inline: 7px; gap: 4px; }
+  .glass-nav button b { font-size: .73rem; }
+  .glass-nav button span { display: none; }
+  .glass-nav.collapsed button span { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel, .glass-nav button, .glass-nav button b, .button { animation: none; transition: none; }
+}
+.tier.selected { background: linear-gradient(145deg, #e7ceff30, #251733); border-color: var(--glow); }
+.secondary:hover { background: #49335f; border-color: var(--glow); }
+.activity, .reward-card { background: #281b39; }
+.activity:has(:checked) { background: #3e2b52; }
+.schedule-day > h3, .reward-card #reward-summary, .week-day[aria-pressed="true"] { color: var(--violet); }
+.activity { transition: background .22s; }
+.activity:has(:checked) input { animation: check-pop .24s ease-out; }
+@keyframes check-pop { 45% { transform: scale(1.2); } }
+@media (max-width: 380px) {
+  .glass-nav button b { display: none; }
+  .glass-nav button span { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-nav, .activity { transition: none; }
+  .activity:has(:checked) input { animation: none; }
+}

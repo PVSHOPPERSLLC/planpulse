@@ -30,6 +30,13 @@
       <a class="button primary" id="login-link" href="/api/auth/login">Continue with Google</a>
       <p class="fine-print">Already subscribed through an earlier checkout? Contact us to link your existing subscription. <a href="mailto:App@pvshoppersllc.com">App@pvshoppersllc.com</a></p>
     </section>
+    <nav class="glass-nav" id="glass-nav" aria-label="Member dashboard" hidden>
+      <button type="button" id="nav-toggle" aria-expanded="true" aria-label="Collapse navigation">☰</button>
+      <button type="button" data-jump="schedule-panel"><span aria-hidden="true">◈</span><b>My week</b></button>
+      <button type="button" data-jump="planner"><span aria-hidden="true">▦</span><b>Calendar</b></button>
+      <button type="button" data-jump="preferences-panel"><span aria-hidden="true">✦</span><b>Customize</b></button>
+      <button type="button" data-jump="rewards-panel"><span aria-hidden="true">◇</span><b>Rewards</b></button>
+    </nav>
     <section id="free-workspace" hidden>
       <div class="heading">
         <h1>Your free planner</h1>
@@ -113,6 +120,7 @@
             <form id="preferences-form">
               <fieldset><legend id="track-legend">Plan types</legend><div id="tracks"></div></fieldset>
               <fieldset><legend>Scheduled days</legend><div id="days" class="day-options"></div></fieldset>
+              <div id="plan-preview" class="plan-preview" aria-live="polite"></div>
               <button class="button primary" id="save-preferences">Create my first plan</button>
             </form>
           </details>

@@ -54,6 +54,11 @@ async function action(button, operation) {
 
 function accountView(data) {
   $('sign-in').hidden = Boolean(data);
+  $('glass-nav').hidden = !data;
+  document.body.dataset.tier = isEntitled(data) ? data.account.tier : 'free';
+  for (const link of $('glass-nav').querySelectorAll('[data-jump]')) {
+    link.hidden = !isEntitled(data) && link.dataset.jump !== 'planner';
+  }
   $('account-actions').hidden = !data;
   const free = Boolean(data) && !isEntitled(data);
   const showMemberships = free && $('show-memberships').getAttribute('aria-expanded') === 'true';
@@ -77,6 +82,7 @@ function showOffers(data) {
   $('tiers').replaceChildren(...Object.entries(data.tiers).map(([id, tier]) => {
     const selected = query.get('tier') === id;
     const card = el('article', undefined, 'panel tier' + (selected ? ' selected' : ''));
+    card.dataset.plan = id;
     const amount = el('p', '$' + tier.price / 100, 'price');
     amount.append(el('small', ' / month'));
     const units = el('p', tier.tracks === 1 ? '1 plan type per week' : tier.tracks + ' plan types per week');
@@ -142,6 +148,7 @@ function showPreferences(data) {
     label.append(input, day);
     return label;
   }));
+  previewPlan();
 }
 
 let selectedScheduleWeek;
@@ -623,5 +630,41 @@ for (const [id, mode] of [['calendar-create', 'create'], ['calendar-revoke', 're
       $('calendar-create').disabled = false;
       $('calendar-revoke').disabled = false;
     }
+  });
+}
+
+function previewPlan() {
+  const tracks = [...$('tracks').querySelectorAll('[data-track]')].flatMap(row => {
+    if (!row.querySelector('input').checked) return [];
+    const [goal, preference] = row.querySelectorAll('select');
+    const item = el('li', undefined, 'preview-track');
+    item.dataset.track = row.dataset.track;
+    item.append(el('strong', model.tracks[row.dataset.track].name), el('span', goal.value + ' · ' + preference.value));
+    return [item];
+  });
+  const days = [...$('days').querySelectorAll('input:checked')].map(day => weekdays[Number(day.value)]);
+  const list = el('ul');
+  list.append(...tracks);
+  $('plan-preview').replaceChildren(el('h3', 'Your weekly plan preview'),
+    el('p', days.length ? days.join(' · ') : 'Choose your scheduled days.'), list);
+}
+
+$('preferences-form').addEventListener('change', previewPlan);
+$('nav-toggle').addEventListener('click', event => {
+  const collapsed = $('glass-nav').classList.toggle('collapsed');
+  event.currentTarget.setAttribute('aria-expanded', String(!collapsed));
+  event.currentTarget.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
+});
+for (const button of $('glass-nav').querySelectorAll('[data-jump]')) {
+  button.setAttribute('aria-label', button.querySelector('b').textContent);
+  button.addEventListener('click', () => {
+    let target = $(button.dataset.jump);
+    if (target.hidden) target = $('preferences-panel');
+    if (target.tagName === 'DETAILS') target.open = true;
+    for (const item of $('glass-nav').querySelectorAll('[data-jump]')) item.removeAttribute('aria-current');
+    button.setAttribute('aria-current', 'location');
+    target.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
   });
 }
